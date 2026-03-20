@@ -1,0 +1,14 @@
+[project]
+name = "terra-ems-simulator"
+version = "0.1.0"
+description = "Terra EMS 设备模拟器 — 模拟工业设备通过各协议上报能源数据"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = [
+    "paho-mqtt>=2.1.0",
+    "pyyaml>=6.0",
+    "pymodbus>=3.6.0",
+]
+
+[project.scripts]
+simulator = "simulator.__main__:main"

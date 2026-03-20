@@ -1,0 +1,166 @@
+# Terra EMS 设备模拟器配置
+# 定义虚拟设备清单及其数据特征
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+# 虚拟设备列表
+devices:
+  # ============================================================
+  # MQTT 设备（通过网关上报）
+  # ============================================================
+
+  # --- 1# 车间总电表 ---
+  - name: "1#车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "METER-001"
+    device_type: "meter"
+    interval: 15                          # 上报间隔（秒）
+    points:
+      - code: "MP-001"
+        name: "正向有功总电能"
+        type: "accumulate"                # accumulate=累积量, instant=瞬时量
+        unit: "kWh"
+        base_value: 135000.0              # 初始表底值
+        hourly_increment: [20.0, 80.0]    # 每小时增量范围 [min, max]
+        pattern: "industrial"             # 数据波动模式
+
+      - code: "MP-002"
+        name: "A相电压"
+        type: "instant"
+        unit: "V"
+        range: [218.0, 225.0]             # 瞬时值范围
+        pattern: "constant"
+
+      - code: "MP-003"
+        name: "A相电流"
+        type: "instant"
+        unit: "A"
+        range: [40.0, 120.0]
+        pattern: "industrial"
+
+      - code: "MP-004"
+        name: "有功功率"
+        type: "instant"
+        unit: "kW"
+        range: [8.0, 27.0]
+        pattern: "industrial"
+
+  # --- 1# 车间水表 ---
+  - name: "1#车间水表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "WATER-001"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "MP-010"
+        name: "累计用水量"
+        type: "accumulate"
+        unit: "m3"
+        base_value: 5600.0
+        hourly_increment: [0.5, 3.0]
+        pattern: "industrial"
+
+  # --- 2# 车间电表 ---
+  - name: "2#车间电表"
+    protocol: mqtt
+    gateway_id: "GW-002"
+    device_id: "METER-002"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "MP-020"
+        name: "正向有功总电能"
+        type: "accumulate"
+        unit: "kWh"
+        base_value: 89000.0
+        hourly_increment: [15.0, 60.0]
+        pattern: "industrial"
+
+      - code: "MP-021"
+        name: "A相电压"
+        type: "instant"
+        unit: "V"
+        range: [219.0, 224.0]
+        pattern: "constant"
+
+  # --- 办公楼电表 ---
+  - name: "办公楼总电表"
+    protocol: mqtt
+    gateway_id: "GW-003"
+    device_id: "METER-003"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "MP-030"
+        name: "正向有功总电能"
+        type: "accumulate"
+        unit: "kWh"
+        base_value: 42000.0
+        hourly_increment: [5.0, 25.0]
+        pattern: "office"
+
+      - code: "MP-031"
+        name: "有功功率"
+        type: "instant"
+        unit: "kW"
+        range: [3.0, 15.0]
+        pattern: "office"
+
+  # ============================================================
+  # Modbus TCP 设备（采集服务主动轮询）
+  # ============================================================
+
+  # --- 3# 车间配电柜（Modbus 电表）---
+  - name: "3#车间配电柜"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5020                            # 模拟器监听端口（避免与真实设备 502 冲突）
+    slave_id: 1
+    interval: 15
+    registers:
+      - point_code: "MP-100"
+        name: "A相电压"
+        address: 0
+        data_type: float32
+        range: [218.0, 225.0]
+        pattern: constant
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "MP-101"
+        name: "A相电流"
+        address: 2
+        data_type: float32
+        range: [40.0, 120.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "MP-102"
+        name: "有功功率"
+        address: 4
+        data_type: float32
+        range: [8.0, 27.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "MP-103"
+        name: "正向有功总电能"
+        address: 10
+        data_type: uint32
+        scale: 0.01                       # 仪表内部单位 0.01 kWh
+        offset: 0.0
+        base_value: 5680000               # 初始寄存器值 = 56800.00 kWh
+        hourly_increment: [2000, 8000]    # 每小时寄存器增量
+        pattern: industrial
+        type: accumulate
