@@ -64,7 +64,7 @@ energy_units:
             manufacturer: 映翰通
             ip_address: 192.168.1.10
             install_location: 生产车间配电柜旁
-            acquisition_configs:
+            data_sources:
               - name: 生产车间RS485-1
                 protocol: modbus-rtu
                 connection: '{"baudRate":9600, "dataBits":8, "stopBits":1, "parity":"NONE"}'
@@ -84,7 +84,7 @@ energy_units:
             manufacturer: 安科瑞
             location: 生产车间总配电柜
             gateway: GW-001
-            acquisition_config: 生产车间RS485-1
+            data_source: 生产车间RS485-1
             points:
               - code: HW-E-001
                 name: 正向有功总电能
@@ -166,7 +166,7 @@ energy_units:
             manufacturer: 宁波水表
             location: 车间进水管
             gateway: GW-001
-            acquisition_config: 生产车间RS485-2
+            data_source: 生产车间RS485-2
             points:
               - code: HW-W-001
                 name: 车间用水量
@@ -202,7 +202,7 @@ energy_units:
                     manufacturer: 安科瑞
                     location: 配料间配电箱
                     gateway: GW-001
-                    acquisition_config: 生产车间RS485-1
+                    data_source: 生产车间RS485-1
                     points:
                       - code: HW-E-010
                         name: 搅拌机有功电能
@@ -247,7 +247,7 @@ energy_units:
                     manufacturer: 安科瑞
                     location: 烘焙间配电箱
                     gateway: GW-001
-                    acquisition_config: 生产车间RS485-1
+                    data_source: 生产车间RS485-1
                     points:
                       - code: HW-E-020
                         name: 1号烤箱有功电能
@@ -286,7 +286,7 @@ energy_units:
                     manufacturer: 安科瑞
                     location: 烘焙间配电箱
                     gateway: GW-001
-                    acquisition_config: 生产车间RS485-1
+                    data_source: 生产车间RS485-1
                     points:
                       - code: HW-E-022
                         name: 2号烤箱有功电能
@@ -319,7 +319,7 @@ energy_units:
                 manufacturer: 金卡智能
                 location: 烘焙间燃气管道
                 gateway: GW-001
-                acquisition_config: 生产车间RS485-2
+                data_source: 生产车间RS485-2
                 points:
                   - code: HW-G-001
                     name: 天然气用量
@@ -354,7 +354,7 @@ energy_units:
                     manufacturer: 安科瑞
                     location: 包装间配电箱
                     gateway: GW-001
-                    acquisition_config: 生产车间RS485-1
+                    data_source: 生产车间RS485-1
                     points:
                       - code: HW-E-030
                         name: 包装线有功电能
@@ -391,7 +391,7 @@ energy_units:
             manufacturer: 有人物联网
             ip_address: ""
             install_location: 冷库控制室
-            acquisition_configs:
+            data_sources:
               - name: 冷库RS485-1
                 protocol: modbus-rtu
                 connection: '{"baudRate":9600, "dataBits":8, "stopBits":1, "parity":"NONE"}'
@@ -406,7 +406,7 @@ energy_units:
             manufacturer: 安科瑞
             location: 冷库配电柜
             gateway: GW-002
-            acquisition_config: 冷库RS485-1
+            data_source: 冷库RS485-1
             points:
               - code: HW-E-040
                 name: 冷库总有功电能
@@ -446,7 +446,7 @@ energy_units:
                 manufacturer: 安科瑞
                 location: 冷库配电柜
                 gateway: GW-002
-                acquisition_config: 冷库RS485-1
+                data_source: 冷库RS485-1
                 points:
                   - code: HW-E-042
                     name: 1号压缩机电能
@@ -485,7 +485,7 @@ energy_units:
                 manufacturer: 安科瑞
                 location: 冷库配电柜
                 gateway: GW-002
-                acquisition_config: 冷库RS485-1
+                data_source: 冷库RS485-1
                 points:
                   - code: HW-E-044
                     name: 2号压缩机电能
@@ -507,7 +507,7 @@ energy_units:
             manufacturer: 海康威视
             location: 冷库内部
             gateway: GW-002
-            acquisition_config: 冷库RS485-1
+            data_source: 冷库RS485-1
             points:
               - code: HW-T-001
                 name: 冷冻库温度
@@ -543,7 +543,7 @@ energy_units:
             manufacturer: 有人物联网
             ip_address: 192.168.1.100
             install_location: 配电房
-            acquisition_configs:
+            data_sources:
               - name: Modbus TCP
                 protocol: modbus-tcp
                 connection: '{"port":502}'
@@ -557,7 +557,7 @@ energy_units:
             manufacturer: 正泰电器
             location: 10kV 高压配电柜
             gateway: GW-PDR
-            acquisition_config: Modbus TCP
+            data_source: Modbus TCP
             comm_params:
               slaveId: 1
             points:
@@ -650,10 +650,10 @@ energy_units:
                 manufacturer: 有人物联网
                 ip_address: 192.168.1.101
                 install_location: 空压站
-                acquisition_configs:
+                data_sources:
                   - name: Modbus TCP
-                    protocol: MODBUS_TCP
-                    port: 502
+                    protocol: modbus-tcp
+                    connection: '{"port":502}'
 
             equipments:
               - code: EQ-COMP-AIR-01
@@ -672,7 +672,7 @@ energy_units:
                     manufacturer: 威胜集团
                     location: 空压站配电箱
                     gateway: GW-KY
-                    acquisition_config: Modbus TCP
+                    data_source: Modbus TCP
                     comm_params:
                       slaveId: 1
                     points:
@@ -723,10 +723,10 @@ energy_units:
                 manufacturer: 有人物联网
                 ip_address: 192.168.1.102
                 install_location: 厂区进水总管旁
-                acquisition_configs:
+                data_sources:
                   - name: Modbus TCP
-                    protocol: MODBUS_TCP
-                    port: 502
+                    protocol: modbus-tcp
+                    connection: '{"port":502}'
 
             meters:
               - code: MTR-WATER-010
@@ -737,7 +737,7 @@ energy_units:
                 manufacturer: 宁波水表
                 location: 厂区进水总管
                 gateway: GW-SS
-                acquisition_config: Modbus TCP
+                data_source: Modbus TCP
                 comm_params:
                   slaveId: 1
                 points:
@@ -876,10 +876,10 @@ energy_units:
 # ============================================================
 # 用能单元: 11 个（含根节点）
 # 网关: 5 个（GW-001 生产车间, GW-002 冷库, GW-PDR 配电房, GW-KY 空压站, GW-SS 给水站）
-# 采集配置: 6 个（GW-001 两个RS485, GW-002 一个RS485, 其余各一个Modbus TCP）
+# 数据源: 6 个（GW-001 两个RS485, GW-002 一个RS485, 其余各一个Modbus TCP）
 # 用能设备: 6 个（搅拌机, 2台烤箱, 包装线, 2台压缩机, 空压机）
 # 计量器具: 18 个
 # 计量点: 38 个
 # 能源类型: 3 种（电力, 水, 天然气）
 # 接入方式: MQTT(智能网关) + Modbus TCP(串口服务器) + HTTP(物业推送）
-# 采集配置: AcquisitionConfig.connection (JSON) + Meter.comm_params (JSON) + MeterPoint.acquisition_params (JSON)
+# 数据源: DataSource.connection (JSON) + Meter.comm_params (JSON) + MeterPoint.acquisition_params (JSON)
