@@ -67,11 +67,19 @@ energy_units:
             data_sources:
               - name: 生产车间RS485-1
                 protocol: modbus-rtu
-                connection: '{"baudRate":9600, "dataBits":8, "stopBits":1, "parity":"NONE"}'
+                connection:
+                  baudRate: 9600
+                  dataBits: 8
+                  stopBits: 1
+                  parity: NONE
                 poll_interval_secs: 15
               - name: 生产车间RS485-2
                 protocol: modbus-rtu
-                connection: '{"baudRate":9600, "dataBits":8, "stopBits":1, "parity":"NONE"}'
+                connection:
+                  baudRate: 9600
+                  dataBits: 8
+                  stopBits: 1
+                  parity: NONE
                 poll_interval_secs: 60
 
         # 车间总表（不属于特定设备，属于车间）
@@ -394,7 +402,11 @@ energy_units:
             data_sources:
               - name: 冷库RS485-1
                 protocol: modbus-rtu
-                connection: '{"baudRate":9600, "dataBits":8, "stopBits":1, "parity":"NONE"}'
+                connection:
+                  baudRate: 9600
+                  dataBits: 8
+                  stopBits: 1
+                  parity: NONE
                 poll_interval_secs: 15
 
         meters:
@@ -546,7 +558,8 @@ energy_units:
             data_sources:
               - name: Modbus TCP
                 protocol: modbus-tcp
-                connection: '{"port":502}'
+                connection:
+                  port: 502
 
         meters:
           - code: MTR-PD194-001
@@ -653,7 +666,8 @@ energy_units:
                 data_sources:
                   - name: Modbus TCP
                     protocol: modbus-tcp
-                    connection: '{"port":502}'
+                    connection:
+                      port: 502
 
             equipments:
               - code: EQ-COMP-AIR-01
@@ -726,7 +740,8 @@ energy_units:
                 data_sources:
                   - name: Modbus TCP
                     protocol: modbus-tcp
-                    connection: '{"port":502}'
+                    connection:
+                      port: 502
 
             meters:
               - code: MTR-WATER-010
