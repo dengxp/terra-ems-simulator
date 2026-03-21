@@ -1,0 +1,855 @@
+# ============================================================
+# 华味食品有限公司 — 场站配置文件
+# ============================================================
+# 本文件描述该企业的完整用能信息，用于：
+# 1. 导入 terra-ems-server，自动创建全部实体和关联关系
+# 2. 转换为模拟器配置，用于开发测试
+# ============================================================
+
+site:
+  name: 华味食品有限公司
+  code: HW
+  industry: 食品加工
+  address: 广州市番禺区大石街道XX路88号
+  contact: 张经理 138xxxx1234
+  description: |
+    中小型食品加工企业，主要生产烘焙食品（面包、饼干、蛋糕）。
+    年产值约 5000 万元，员工 120 人，占地 15 亩。
+    厂区包括生产车间、冷库、配电房、办公楼、食堂。
+    生产车间和冷库已安装智能网关，配电房使用串口服务器直连，
+    办公楼和食堂由物业楼宇系统管理。
+
+# ============================================================
+# 能源类型
+# ============================================================
+energy_types:
+  - code: ELECTRIC
+    name: 电力
+    unit: kWh
+    coefficient: 0.1229
+    emission_factor: 0.5703
+
+  - code: WATER
+    name: 水
+    unit: m³
+    coefficient: 0.0857
+    emission_factor: 0.0
+
+  - code: GAS
+    name: 天然气
+    unit: m³
+    coefficient: 1.3300
+    emission_factor: 2.1622
+
+# ============================================================
+# 用能单元树 + 内嵌网关、设备、仪表、计量点
+# ============================================================
+energy_units:
+  - code: HW-ROOT
+    name: 华味食品
+    type: GENERAL
+    children:
+
+      # ========================================================
+      # 生产车间
+      # ========================================================
+      - code: HW-SC
+        name: 生产车间
+        type: GENERAL
+
+        gateways:
+          - code: GW-001
+            name: 生产车间网关
+            model: 映翰通 IR915
+            manufacturer: 映翰通
+            ip_address: 192.168.1.10
+            install_location: 生产车间配电柜旁
+            channels:
+              - name: RS485-1口
+                protocol: MODBUS_RTU
+                baud_rate: 9600
+                data_bits: 8
+                stop_bits: 1
+                parity: NONE
+                poll_interval_secs: 15
+              - name: RS485-2口
+                protocol: MODBUS_RTU
+                baud_rate: 9600
+                data_bits: 8
+                stop_bits: 1
+                parity: NONE
+                poll_interval_secs: 60
+
+        # 车间总表（不属于特定设备，属于车间）
+        meters:
+          - code: MTR-ACR220-001
+            name: 生产车间总电表
+            type: 多功能电力仪表
+            energy_type: ELECTRIC
+            model_number: 安科瑞 ACR220EL
+            manufacturer: 安科瑞
+            location: 生产车间总配电柜
+            gateway: GW-001
+            channel: RS485-1口
+            points:
+              - code: HW-E-001
+                name: 正向有功总电能
+                type: COLLECT
+                category: ENERGY
+                unit: kWh
+                energy_type: ELECTRIC
+                sim_type: accumulate
+                sim_base_value: 856230.0
+                sim_hourly_increment: [80.0, 350.0]
+                sim_pattern: industrial
+
+              - code: HW-E-002
+                name: A相电压
+                type: COLLECT
+                category: OPERATION
+                unit: V
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [218.0, 228.0]
+                sim_pattern: constant
+
+              - code: HW-E-003
+                name: B相电压
+                type: COLLECT
+                category: OPERATION
+                unit: V
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [219.0, 227.0]
+                sim_pattern: constant
+
+              - code: HW-E-004
+                name: C相电压
+                type: COLLECT
+                category: OPERATION
+                unit: V
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [217.0, 226.0]
+                sim_pattern: constant
+
+              - code: HW-E-005
+                name: A相电流
+                type: COLLECT
+                category: OPERATION
+                unit: A
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [80.0, 320.0]
+                sim_pattern: industrial
+
+              - code: HW-E-006
+                name: 总有功功率
+                type: COLLECT
+                category: ENERGY
+                unit: kW
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [50.0, 230.0]
+                sim_pattern: industrial
+
+              - code: HW-E-007
+                name: 功率因数
+                type: COLLECT
+                category: OPERATION
+                unit: ""
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [0.82, 0.95]
+                sim_pattern: constant
+
+          # 车间水表
+          - code: MTR-WATER-001
+            name: 生产车间水表
+            type: 远传水表
+            energy_type: WATER
+            model_number: 宁水 LXLC-50
+            manufacturer: 宁波水表
+            location: 车间进水管
+            gateway: GW-001
+            channel: RS485-2口
+            points:
+              - code: HW-W-001
+                name: 车间用水量
+                type: COLLECT
+                category: ENERGY
+                unit: m³
+                energy_type: WATER
+                sim_type: accumulate
+                sim_base_value: 23456.0
+                sim_hourly_increment: [0.8, 5.0]
+                sim_pattern: industrial
+
+        children:
+          # --- 配料工段 ---
+          - code: HW-SC-PL
+            name: 配料工段
+            type: PROCESS
+
+            equipments:
+              - code: EQ-MIXER-01
+                name: 搅拌机
+                type: 搅拌设备
+                model_number: 银鹰 HMJ-50
+                manufacturer: 广州银鹰
+                rated_power: 37.0
+                location: 配料间
+                meters:
+                  - code: MTR-ACR120-001
+                    name: 搅拌机电表
+                    type: 电力仪表
+                    energy_type: ELECTRIC
+                    model_number: 安科瑞 ACR120EL
+                    manufacturer: 安科瑞
+                    location: 配料间配电箱
+                    gateway: GW-001
+                    channel: RS485-1口
+                    points:
+                      - code: HW-E-010
+                        name: 搅拌机有功电能
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kWh
+                        energy_type: ELECTRIC
+                        sim_type: accumulate
+                        sim_base_value: 125680.0
+                        sim_hourly_increment: [15.0, 55.0]
+                        sim_pattern: industrial
+
+                      - code: HW-E-011
+                        name: 搅拌机功率
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kW
+                        energy_type: ELECTRIC
+                        sim_type: instant
+                        sim_range: [0.0, 37.0]
+                        sim_pattern: industrial
+
+          # --- 烘焙工段 ---
+          - code: HW-SC-HB
+            name: 烘焙工段
+            type: PROCESS
+
+            equipments:
+              - code: EQ-OVEN-01
+                name: 1号烤箱
+                type: 烘焙设备
+                model_number: 新麦 SM-710E
+                manufacturer: 无锡新麦
+                rated_power: 55.0
+                location: 烘焙间
+                meters:
+                  - code: MTR-ACR120-002
+                    name: 1号烤箱电表
+                    type: 电力仪表
+                    energy_type: ELECTRIC
+                    model_number: 安科瑞 ACR120EL
+                    manufacturer: 安科瑞
+                    location: 烘焙间配电箱
+                    gateway: GW-001
+                    channel: RS485-1口
+                    points:
+                      - code: HW-E-020
+                        name: 1号烤箱有功电能
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kWh
+                        energy_type: ELECTRIC
+                        sim_type: accumulate
+                        sim_base_value: 234560.0
+                        sim_hourly_increment: [25.0, 80.0]
+                        sim_pattern: industrial
+
+                      - code: HW-E-021
+                        name: 1号烤箱功率
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kW
+                        energy_type: ELECTRIC
+                        sim_type: instant
+                        sim_range: [0.0, 55.0]
+                        sim_pattern: industrial
+
+              - code: EQ-OVEN-02
+                name: 2号烤箱
+                type: 烘焙设备
+                model_number: 新麦 SM-710E
+                manufacturer: 无锡新麦
+                rated_power: 55.0
+                location: 烘焙间
+                meters:
+                  - code: MTR-ACR120-003
+                    name: 2号烤箱电表
+                    type: 电力仪表
+                    energy_type: ELECTRIC
+                    model_number: 安科瑞 ACR120EL
+                    manufacturer: 安科瑞
+                    location: 烘焙间配电箱
+                    gateway: GW-001
+                    channel: RS485-1口
+                    points:
+                      - code: HW-E-022
+                        name: 2号烤箱有功电能
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kWh
+                        energy_type: ELECTRIC
+                        sim_type: accumulate
+                        sim_base_value: 198320.0
+                        sim_hourly_increment: [20.0, 75.0]
+                        sim_pattern: industrial
+
+                      - code: HW-E-023
+                        name: 2号烤箱功率
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kW
+                        energy_type: ELECTRIC
+                        sim_type: instant
+                        sim_range: [0.0, 55.0]
+                        sim_pattern: industrial
+
+            # 烘焙工段天然气表（不属于特定设备）
+            meters:
+              - code: MTR-GAS-001
+                name: 烘焙工段天然气表
+                type: 燃气表
+                energy_type: GAS
+                model_number: 金卡 IC-G16
+                manufacturer: 金卡智能
+                location: 烘焙间燃气管道
+                gateway: GW-001
+                channel: RS485-2口
+                points:
+                  - code: HW-G-001
+                    name: 天然气用量
+                    type: COLLECT
+                    category: ENERGY
+                    unit: m³
+                    energy_type: GAS
+                    sim_type: accumulate
+                    sim_base_value: 45678.0
+                    sim_hourly_increment: [2.0, 12.0]
+                    sim_pattern: industrial
+
+          # --- 包装工段 ---
+          - code: HW-SC-BZ
+            name: 包装工段
+            type: PROCESS
+
+            equipments:
+              - code: EQ-PACK-01
+                name: 自动包装线
+                type: 包装设备
+                model_number: 博宇 BZ-400
+                manufacturer: 佛山博宇
+                rated_power: 18.0
+                location: 包装间
+                meters:
+                  - code: MTR-ACR120-004
+                    name: 包装线电表
+                    type: 电力仪表
+                    energy_type: ELECTRIC
+                    model_number: 安科瑞 ACR120EL
+                    manufacturer: 安科瑞
+                    location: 包装间配电箱
+                    gateway: GW-001
+                    channel: RS485-1口
+                    points:
+                      - code: HW-E-030
+                        name: 包装线有功电能
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kWh
+                        energy_type: ELECTRIC
+                        sim_type: accumulate
+                        sim_base_value: 67890.0
+                        sim_hourly_increment: [8.0, 25.0]
+                        sim_pattern: industrial
+
+                      - code: HW-E-031
+                        name: 包装线功率
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kW
+                        energy_type: ELECTRIC
+                        sim_type: instant
+                        sim_range: [0.0, 18.0]
+                        sim_pattern: industrial
+
+      # ========================================================
+      # 冷库
+      # ========================================================
+      - code: HW-LK
+        name: 冷库
+        type: GENERAL
+
+        gateways:
+          - code: GW-002
+            name: 冷库网关
+            model: 有人 USR-G786
+            manufacturer: 有人物联网
+            ip_address: ""
+            install_location: 冷库控制室
+            channels:
+              - name: RS485-1口
+                protocol: MODBUS_RTU
+                baud_rate: 9600
+                data_bits: 8
+                stop_bits: 1
+                parity: NONE
+                poll_interval_secs: 15
+
+        meters:
+          - code: MTR-ACR220-002
+            name: 冷库总电表
+            type: 多功能电力仪表
+            energy_type: ELECTRIC
+            model_number: 安科瑞 ACR220EL
+            manufacturer: 安科瑞
+            location: 冷库配电柜
+            gateway: GW-002
+            channel: RS485-1口
+            points:
+              - code: HW-E-040
+                name: 冷库总有功电能
+                type: COLLECT
+                category: ENERGY
+                unit: kWh
+                energy_type: ELECTRIC
+                sim_type: accumulate
+                sim_base_value: 567890.0
+                sim_hourly_increment: [30.0, 80.0]
+                sim_pattern: constant
+
+              - code: HW-E-041
+                name: 冷库总功率
+                type: COLLECT
+                category: ENERGY
+                unit: kW
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [25.0, 65.0]
+                sim_pattern: constant
+
+        equipments:
+          - code: EQ-COMP-01
+            name: 1号冷冻压缩机
+            type: 制冷设备
+            model_number: 比泽尔 4HE-18Y
+            manufacturer: 比泽尔
+            rated_power: 37.0
+            location: 冷库机房
+            meters:
+              - code: MTR-ACR120-005
+                name: 1号压缩机电表
+                type: 电力仪表
+                energy_type: ELECTRIC
+                model_number: 安科瑞 ACR120EL
+                manufacturer: 安科瑞
+                location: 冷库配电柜
+                gateway: GW-002
+                channel: RS485-1口
+                points:
+                  - code: HW-E-042
+                    name: 1号压缩机电能
+                    type: COLLECT
+                    category: ENERGY
+                    unit: kWh
+                    energy_type: ELECTRIC
+                    sim_type: accumulate
+                    sim_base_value: 312450.0
+                    sim_hourly_increment: [15.0, 45.0]
+                    sim_pattern: hvac
+
+                  - code: HW-E-043
+                    name: 1号压缩机功率
+                    type: COLLECT
+                    category: ENERGY
+                    unit: kW
+                    energy_type: ELECTRIC
+                    sim_type: instant
+                    sim_range: [0.0, 37.0]
+                    sim_pattern: hvac
+
+          - code: EQ-COMP-02
+            name: 2号冷冻压缩机
+            type: 制冷设备
+            model_number: 比泽尔 4HE-18Y
+            manufacturer: 比泽尔
+            rated_power: 37.0
+            location: 冷库机房
+            meters:
+              - code: MTR-ACR120-006
+                name: 2号压缩机电表
+                type: 电力仪表
+                energy_type: ELECTRIC
+                model_number: 安科瑞 ACR120EL
+                manufacturer: 安科瑞
+                location: 冷库配电柜
+                gateway: GW-002
+                channel: RS485-1口
+                points:
+                  - code: HW-E-044
+                    name: 2号压缩机电能
+                    type: COLLECT
+                    category: ENERGY
+                    unit: kWh
+                    energy_type: ELECTRIC
+                    sim_type: accumulate
+                    sim_base_value: 289670.0
+                    sim_hourly_increment: [15.0, 45.0]
+                    sim_pattern: hvac
+
+        # 冷库温度传感器（不属于特定设备）
+        sensors:
+          - code: SENSOR-TEMP-001
+            name: 冷库温度传感器
+            type: 温湿度传感器
+            model_number: 海康 DS-1
+            manufacturer: 海康威视
+            location: 冷库内部
+            gateway: GW-002
+            channel: RS485-1口
+            points:
+              - code: HW-T-001
+                name: 冷冻库温度
+                type: COLLECT
+                category: OPERATION
+                unit: "℃"
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [-22.0, -16.0]
+                sim_pattern: constant
+
+              - code: HW-T-002
+                name: 冷藏库温度
+                type: COLLECT
+                category: OPERATION
+                unit: "℃"
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [0.0, 5.0]
+                sim_pattern: constant
+
+      # ========================================================
+      # 配电房（无网关，串口服务器 Modbus TCP 直连）
+      # ========================================================
+      - code: HW-PDR
+        name: 配电房
+        type: GENERAL
+
+        meters:
+          - code: MTR-PD194-001
+            name: 高压进线总表
+            type: 多功能电力仪表
+            energy_type: ELECTRIC
+            model_number: 正泰 PD194E-9S4
+            manufacturer: 正泰电器
+            location: 10kV 高压配电柜
+            modbus_tcp:
+              host: 192.168.1.100
+              port: 502
+              slave_id: 1
+            points:
+              - code: HW-E-050
+                name: 全厂总有功电能
+                type: COLLECT
+                category: ENERGY
+                unit: kWh
+                energy_type: ELECTRIC
+                modbus_register:
+                  address: 0
+                  function_code: 3
+                  data_type: float32
+                  byte_order: big_endian
+                  scale: 1.0
+                  offset: 0.0
+                sim_type: accumulate
+                sim_base_value: 3500000.0
+                sim_hourly_increment: [150.0, 600.0]
+                sim_pattern: industrial
+
+              - code: HW-E-051
+                name: 全厂总有功功率
+                type: COLLECT
+                category: ENERGY
+                unit: kW
+                energy_type: ELECTRIC
+                modbus_register:
+                  address: 2
+                  function_code: 3
+                  data_type: float32
+                  byte_order: big_endian
+                  scale: 1.0
+                  offset: 0.0
+                sim_type: instant
+                sim_range: [100.0, 450.0]
+                sim_pattern: industrial
+
+              - code: HW-E-052
+                name: A相电压
+                type: COLLECT
+                category: OPERATION
+                unit: V
+                energy_type: ELECTRIC
+                modbus_register:
+                  address: 4
+                  function_code: 3
+                  data_type: float32
+                  byte_order: big_endian
+                  scale: 1.0
+                  offset: 0.0
+                sim_type: instant
+                sim_range: [218.0, 228.0]
+                sim_pattern: constant
+
+              - code: HW-E-053
+                name: 功率因数
+                type: COLLECT
+                category: OPERATION
+                unit: ""
+                energy_type: ELECTRIC
+                modbus_register:
+                  address: 6
+                  function_code: 3
+                  data_type: float32
+                  byte_order: big_endian
+                  scale: 1.0
+                  offset: 0.0
+                sim_type: instant
+                sim_range: [0.85, 0.96]
+                sim_pattern: constant
+
+      # ========================================================
+      # 公用设施
+      # ========================================================
+      - code: HW-GY
+        name: 公用设施
+        type: GENERAL
+        children:
+
+          # --- 空压站 ---
+          - code: HW-GY-KY
+            name: 空压站
+            type: GENERAL
+            equipments:
+              - code: EQ-COMP-AIR-01
+                name: 螺杆空压机
+                type: 空压设备
+                model_number: 阿特拉斯 GA30
+                manufacturer: 阿特拉斯·科普柯
+                rated_power: 30.0
+                location: 空压站
+                meters:
+                  - code: MTR-ACR120-007
+                    name: 空压机电表
+                    type: 电力仪表
+                    energy_type: ELECTRIC
+                    model_number: 威胜 DSSD331
+                    manufacturer: 威胜集团
+                    location: 空压站配电箱
+                    modbus_tcp:
+                      host: 192.168.1.101
+                      port: 502
+                      slave_id: 1
+                    points:
+                      - code: HW-E-060
+                        name: 空压机有功电能
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kWh
+                        energy_type: ELECTRIC
+                        modbus_register:
+                          address: 0
+                          function_code: 3
+                          data_type: float32
+                          byte_order: big_endian
+                          scale: 1.0
+                          offset: 0.0
+                        sim_type: accumulate
+                        sim_base_value: 189000.0
+                        sim_hourly_increment: [10.0, 45.0]
+                        sim_pattern: industrial
+
+                      - code: HW-E-061
+                        name: 空压机功率
+                        type: COLLECT
+                        category: ENERGY
+                        unit: kW
+                        energy_type: ELECTRIC
+                        modbus_register:
+                          address: 2
+                          function_code: 3
+                          data_type: float32
+                          byte_order: big_endian
+                          scale: 1.0
+                          offset: 0.0
+                        sim_type: instant
+                        sim_range: [0.0, 30.0]
+                        sim_pattern: industrial
+
+          # --- 全厂总水表 ---
+          - code: HW-GY-SS
+            name: 给水站
+            type: GENERAL
+            meters:
+              - code: MTR-WATER-010
+                name: 全厂总水表
+                type: 远传水表
+                energy_type: WATER
+                model_number: 宁水 LXLC-80
+                manufacturer: 宁波水表
+                location: 厂区进水总管
+                modbus_tcp:
+                  host: 192.168.1.102
+                  port: 502
+                  slave_id: 1
+                points:
+                  - code: HW-W-010
+                    name: 全厂总用水量
+                    type: COLLECT
+                    category: ENERGY
+                    unit: m³
+                    energy_type: WATER
+                    modbus_register:
+                      address: 0
+                      function_code: 3
+                      data_type: uint32
+                      byte_order: big_endian
+                      scale: 0.01
+                      offset: 0.0
+                    sim_type: accumulate
+                    sim_base_value: 567800.0
+                    sim_hourly_increment: [1.0, 5.0]
+                    sim_pattern: industrial
+
+      # ========================================================
+      # 办公楼（无网关，物业系统 HTTP 推送）
+      # ========================================================
+      - code: HW-OFC
+        name: 办公楼
+        type: GENERAL
+
+        meters:
+          - code: MTR-BMS-001
+            name: 办公楼总电表
+            type: 电力仪表
+            energy_type: ELECTRIC
+            model_number: 物业系统内置
+            location: 办公楼配电间
+            data_source: HTTP
+            points:
+              - code: HW-E-070
+                name: 办公楼有功电能
+                type: COLLECT
+                category: ENERGY
+                unit: kWh
+                energy_type: ELECTRIC
+                sim_type: accumulate
+                sim_base_value: 98760.0
+                sim_hourly_increment: [5.0, 25.0]
+                sim_pattern: office
+
+              - code: HW-E-071
+                name: 办公楼功率
+                type: COLLECT
+                category: ENERGY
+                unit: kW
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [3.0, 18.0]
+                sim_pattern: office
+
+          - code: MTR-BMS-002
+            name: 中央空调电表
+            type: 电力仪表
+            energy_type: ELECTRIC
+            model_number: 物业系统内置
+            location: 办公楼空调机房
+            data_source: HTTP
+            points:
+              - code: HW-E-072
+                name: 空调有功电能
+                type: COLLECT
+                category: ENERGY
+                unit: kWh
+                energy_type: ELECTRIC
+                sim_type: accumulate
+                sim_base_value: 156780.0
+                sim_hourly_increment: [8.0, 40.0]
+                sim_pattern: hvac
+
+              - code: HW-E-073
+                name: 空调功率
+                type: COLLECT
+                category: ENERGY
+                unit: kW
+                energy_type: ELECTRIC
+                sim_type: instant
+                sim_range: [5.0, 30.0]
+                sim_pattern: hvac
+
+      # ========================================================
+      # 食堂
+      # ========================================================
+      - code: HW-ST
+        name: 食堂
+        type: GENERAL
+
+        meters:
+          - code: MTR-BMS-003
+            name: 食堂电表
+            type: 电力仪表
+            energy_type: ELECTRIC
+            model_number: 物业系统内置
+            location: 食堂配电箱
+            data_source: HTTP
+            points:
+              - code: HW-E-080
+                name: 食堂有功电能
+                type: COLLECT
+                category: ENERGY
+                unit: kWh
+                energy_type: ELECTRIC
+                sim_type: accumulate
+                sim_base_value: 34560.0
+                sim_hourly_increment: [3.0, 15.0]
+                sim_pattern: industrial
+
+          - code: MTR-BMS-GAS-001
+            name: 食堂天然气表
+            type: 燃气表
+            energy_type: GAS
+            model_number: 物业系统内置
+            location: 食堂燃气管道
+            data_source: HTTP
+            points:
+              - code: HW-G-010
+                name: 食堂天然气用量
+                type: COLLECT
+                category: ENERGY
+                unit: m³
+                energy_type: GAS
+                sim_type: accumulate
+                sim_base_value: 12340.0
+                sim_hourly_increment: [0.5, 5.0]
+                sim_pattern: industrial
+
+# ============================================================
+# 汇总统计
+# ============================================================
+# 用能单元: 11 个（含根节点）
+# 网关: 2 个（GW-001 生产车间, GW-002 冷库）
+# 通信通道: 3 个（GW-001 两个口, GW-002 一个口）
+# 用能设备: 6 个（搅拌机, 2台烤箱, 包装线, 2台压缩机, 空压机）
+# 计量器具: 18 个
+# 计量点: 38 个
+# 能源类型: 3 种（电力, 水, 天然气）
+# 接入方式: MQTT(网关) + Modbus TCP(直连) + HTTP(物业推送)
