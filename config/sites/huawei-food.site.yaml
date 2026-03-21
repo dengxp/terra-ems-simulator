@@ -507,11 +507,11 @@ energy_units:
                     sim_hourly_increment: [15.0, 45.0]
                     sim_pattern: hvac
 
-        # 冷库温度传感器（不属于特定设备）
-        sensors:
-          - code: SENSOR-TEMP-001
+        # 冷库温度传感器（不属于特定设备，作为计量器具管理）
+          - code: MTR-TEMP-001
             name: 冷库温度传感器
             type: 温湿度传感器
+            energy_type: ELECTRIC
             model_number: 海康 DS-1
             manufacturer: 海康威视
             location: 冷库内部
@@ -539,11 +539,23 @@ energy_units:
                 sim_pattern: constant
 
       # ========================================================
-      # 配电房（无网关，串口服务器 Modbus TCP 直连）
+      # 配电房（串口服务器作为网关，Modbus TCP）
       # ========================================================
       - code: HW-PDR
         name: 配电房
         type: GENERAL
+
+        gateways:
+          - code: GW-PDR
+            name: 配电房串口服务器
+            model: 有人 USR-TCP232
+            manufacturer: 有人物联网
+            ip_address: 192.168.1.100
+            install_location: 配电房
+            channels:
+              - name: Modbus TCP
+                protocol: MODBUS_TCP
+                port: 502
 
         meters:
           - code: MTR-PD194-001
@@ -553,10 +565,10 @@ energy_units:
             model_number: 正泰 PD194E-9S4
             manufacturer: 正泰电器
             location: 10kV 高压配电柜
-            modbus_tcp:
-              host: 192.168.1.100
-              port: 502
-              slave_id: 1
+            gateway: GW-PDR
+            channel: Modbus TCP
+            comm_params:
+              slaveId: 1
             points:
               - code: HW-E-050
                 name: 全厂总有功电能
@@ -564,11 +576,11 @@ energy_units:
                 category: ENERGY
                 unit: kWh
                 energy_type: ELECTRIC
-                modbus_register:
+                acquisition_params:
                   address: 0
-                  function_code: 3
-                  data_type: float32
-                  byte_order: big_endian
+                  functionCode: 3
+                  dataType: float32
+                  byteOrder: big_endian
                   scale: 1.0
                   offset: 0.0
                 sim_type: accumulate
@@ -582,11 +594,11 @@ energy_units:
                 category: ENERGY
                 unit: kW
                 energy_type: ELECTRIC
-                modbus_register:
+                acquisition_params:
                   address: 2
-                  function_code: 3
-                  data_type: float32
-                  byte_order: big_endian
+                  functionCode: 3
+                  dataType: float32
+                  byteOrder: big_endian
                   scale: 1.0
                   offset: 0.0
                 sim_type: instant
@@ -599,11 +611,11 @@ energy_units:
                 category: OPERATION
                 unit: V
                 energy_type: ELECTRIC
-                modbus_register:
+                acquisition_params:
                   address: 4
-                  function_code: 3
-                  data_type: float32
-                  byte_order: big_endian
+                  functionCode: 3
+                  dataType: float32
+                  byteOrder: big_endian
                   scale: 1.0
                   offset: 0.0
                 sim_type: instant
@@ -616,11 +628,11 @@ energy_units:
                 category: OPERATION
                 unit: ""
                 energy_type: ELECTRIC
-                modbus_register:
+                acquisition_params:
                   address: 6
-                  function_code: 3
-                  data_type: float32
-                  byte_order: big_endian
+                  functionCode: 3
+                  dataType: float32
+                  byteOrder: big_endian
                   scale: 1.0
                   offset: 0.0
                 sim_type: instant
@@ -639,6 +651,19 @@ energy_units:
           - code: HW-GY-KY
             name: 空压站
             type: GENERAL
+
+            gateways:
+              - code: GW-KY
+                name: 空压站串口服务器
+                model: 有人 USR-TCP232
+                manufacturer: 有人物联网
+                ip_address: 192.168.1.101
+                install_location: 空压站
+                channels:
+                  - name: Modbus TCP
+                    protocol: MODBUS_TCP
+                    port: 502
+
             equipments:
               - code: EQ-COMP-AIR-01
                 name: 螺杆空压机
@@ -655,10 +680,10 @@ energy_units:
                     model_number: 威胜 DSSD331
                     manufacturer: 威胜集团
                     location: 空压站配电箱
-                    modbus_tcp:
-                      host: 192.168.1.101
-                      port: 502
-                      slave_id: 1
+                    gateway: GW-KY
+                    channel: Modbus TCP
+                    comm_params:
+                      slaveId: 1
                     points:
                       - code: HW-E-060
                         name: 空压机有功电能
@@ -666,11 +691,11 @@ energy_units:
                         category: ENERGY
                         unit: kWh
                         energy_type: ELECTRIC
-                        modbus_register:
+                        acquisition_params:
                           address: 0
-                          function_code: 3
-                          data_type: float32
-                          byte_order: big_endian
+                          functionCode: 3
+                          dataType: float32
+                          byteOrder: big_endian
                           scale: 1.0
                           offset: 0.0
                         sim_type: accumulate
@@ -684,11 +709,11 @@ energy_units:
                         category: ENERGY
                         unit: kW
                         energy_type: ELECTRIC
-                        modbus_register:
+                        acquisition_params:
                           address: 2
-                          function_code: 3
-                          data_type: float32
-                          byte_order: big_endian
+                          functionCode: 3
+                          dataType: float32
+                          byteOrder: big_endian
                           scale: 1.0
                           offset: 0.0
                         sim_type: instant
@@ -699,6 +724,19 @@ energy_units:
           - code: HW-GY-SS
             name: 给水站
             type: GENERAL
+
+            gateways:
+              - code: GW-SS
+                name: 给水站串口服务器
+                model: 有人 USR-TCP232
+                manufacturer: 有人物联网
+                ip_address: 192.168.1.102
+                install_location: 厂区进水总管旁
+                channels:
+                  - name: Modbus TCP
+                    protocol: MODBUS_TCP
+                    port: 502
+
             meters:
               - code: MTR-WATER-010
                 name: 全厂总水表
@@ -707,10 +745,10 @@ energy_units:
                 model_number: 宁水 LXLC-80
                 manufacturer: 宁波水表
                 location: 厂区进水总管
-                modbus_tcp:
-                  host: 192.168.1.102
-                  port: 502
-                  slave_id: 1
+                gateway: GW-SS
+                channel: Modbus TCP
+                comm_params:
+                  slaveId: 1
                 points:
                   - code: HW-W-010
                     name: 全厂总用水量
@@ -718,11 +756,11 @@ energy_units:
                     category: ENERGY
                     unit: m³
                     energy_type: WATER
-                    modbus_register:
+                    acquisition_params:
                       address: 0
-                      function_code: 3
-                      data_type: uint32
-                      byte_order: big_endian
+                      functionCode: 3
+                      dataType: uint32
+                      byteOrder: big_endian
                       scale: 0.01
                       offset: 0.0
                     sim_type: accumulate
@@ -846,10 +884,11 @@ energy_units:
 # 汇总统计
 # ============================================================
 # 用能单元: 11 个（含根节点）
-# 网关: 2 个（GW-001 生产车间, GW-002 冷库）
-# 通信通道: 3 个（GW-001 两个口, GW-002 一个口）
+# 网关: 5 个（GW-001 生产车间, GW-002 冷库, GW-PDR 配电房, GW-KY 空压站, GW-SS 给水站）
+# 通信通道: 6 个（GW-001 两个RS485口, GW-002 一个RS485口, 其余各一个Modbus TCP）
 # 用能设备: 6 个（搅拌机, 2台烤箱, 包装线, 2台压缩机, 空压机）
 # 计量器具: 18 个
 # 计量点: 38 个
 # 能源类型: 3 种（电力, 水, 天然气）
-# 接入方式: MQTT(网关) + Modbus TCP(直连) + HTTP(物业推送)
+# 接入方式: MQTT(智能网关) + Modbus TCP(串口服务器) + HTTP(物业推送）
+# 通信参数: Meter.comm_params (JSON) + MeterPoint.acquisition_params (JSON)
