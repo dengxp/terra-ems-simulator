@@ -1,0 +1,326 @@
+# ============================================================
+# 万汇广场 — 大型商业综合体
+# ============================================================
+#
+# 行业：商业综合体（购物 + 餐饮 + 影院 + 超市）
+# 规模：建筑面积 12 万 m²，地上 5 层 + 地下 2 层，商户 300+
+# 能源：电力、天然气（餐饮区）、水
+# 特点：分租户计量，餐饮区独立计气
+#       中央空调系统庞大（3台离心式冷水机组）
+#       营业时间负荷特征明显（10:00-22:00）
+#       全网关覆盖，楼宇自控系统完善
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 高压配电 — 网关 GW-HV
+  # ============================================================
+
+  - name: "10kV 1号进线总表"
+    protocol: mqtt
+    gateway_id: "GW-HV"
+    device_id: "PM820-HV-01"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "WH-E-001"
+        name: "1号进线有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 56780000.0
+        hourly_increment: [500.0, 3000.0]
+        pattern: office
+      - code: "WH-E-002"
+        name: "1号进线功率"
+        type: instant
+        unit: "kW"
+        range: [300.0, 2200.0]
+        pattern: office
+      - code: "WH-E-003"
+        name: "1号进线最大需量"
+        type: instant
+        unit: "kW"
+        range: [1800.0, 2500.0]
+        pattern: constant
+
+  - name: "10kV 2号进线总表"
+    protocol: mqtt
+    gateway_id: "GW-HV"
+    device_id: "PM820-HV-02"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "WH-E-004"
+        name: "2号进线有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 48900000.0
+        hourly_increment: [400.0, 2500.0]
+        pattern: office
+
+  # ============================================================
+  # 低压分区计量 — 网关 GW-LV
+  # ============================================================
+
+  - name: "B1层(超市)电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-B1"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-010"
+        name: "B1超市电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 8900000.0
+        hourly_increment: [80.0, 400.0]
+        pattern: office
+
+  - name: "1F层(奢侈品/化妆品)电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-1F"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-020"
+        name: "1F电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5670000.0
+        hourly_increment: [50.0, 250.0]
+        pattern: office
+
+  - name: "2F层(服装)电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-2F"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-030"
+        name: "2F电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 4560000.0
+        hourly_increment: [40.0, 200.0]
+        pattern: office
+
+  - name: "3F层(儿童/家居)电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-3F"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-040"
+        name: "3F电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 3450000.0
+        hourly_increment: [30.0, 180.0]
+        pattern: office
+
+  - name: "4F层(餐饮)电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-4F"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-050"
+        name: "4F餐饮区电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 6780000.0
+        hourly_increment: [60.0, 350.0]
+        pattern: office
+
+  - name: "5F层(影院/KTV)电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-5F"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-060"
+        name: "5F娱乐区电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 4560000.0
+        hourly_increment: [30.0, 200.0]
+        pattern: office
+
+  - name: "公共照明电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-LIGHT"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "WH-E-070"
+        name: "公共照明电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2340000.0
+        hourly_increment: [20.0, 80.0]
+        pattern: office
+
+  - name: "电梯扶梯电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-LIFT"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "WH-E-075"
+        name: "电梯扶梯电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1890000.0
+        hourly_increment: [15.0, 60.0]
+        pattern: office
+
+  - name: "地下停车场电表"
+    protocol: mqtt
+    gateway_id: "GW-LV"
+    device_id: "PM710-PARK"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "WH-E-078"
+        name: "停车场电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 890000.0
+        hourly_increment: [8.0, 30.0]
+        pattern: constant
+
+  # ============================================================
+  # 暖通空调 — 网关 GW-HVAC
+  # ============================================================
+
+  - name: "1号离心冷水机组电表"
+    protocol: mqtt
+    gateway_id: "GW-HVAC"
+    device_id: "PM810-CH-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-080"
+        name: "1号冷水机组电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 7890000.0
+        hourly_increment: [80.0, 500.0]
+        pattern: hvac
+      - code: "WH-E-081"
+        name: "1号冷水机组功率"
+        type: instant
+        unit: "kW"
+        range: [50.0, 380.0]
+        pattern: hvac
+
+  - name: "2号离心冷水机组电表"
+    protocol: mqtt
+    gateway_id: "GW-HVAC"
+    device_id: "PM810-CH-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-082"
+        name: "2号冷水机组电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 6780000.0
+        hourly_increment: [70.0, 450.0]
+        pattern: hvac
+
+  - name: "3号离心冷水机组电表"
+    protocol: mqtt
+    gateway_id: "GW-HVAC"
+    device_id: "PM810-CH-03"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "WH-E-083"
+        name: "3号冷水机组电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5670000.0
+        hourly_increment: [60.0, 400.0]
+        pattern: hvac
+
+  - name: "冷却塔电表"
+    protocol: mqtt
+    gateway_id: "GW-HVAC"
+    device_id: "PM710-CT"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "WH-E-085"
+        name: "冷却塔电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1230000.0
+        hourly_increment: [10.0, 60.0]
+        pattern: hvac
+
+  - name: "空调水泵电表"
+    protocol: mqtt
+    gateway_id: "GW-HVAC"
+    device_id: "PM710-PUMP"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "WH-E-087"
+        name: "水泵电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 890000.0
+        hourly_increment: [8.0, 45.0]
+        pattern: hvac
+
+  # ============================================================
+  # 餐饮区天然气 — 网关 GW-GAS
+  # ============================================================
+
+  - name: "4F餐饮总天然气表"
+    protocol: mqtt
+    gateway_id: "GW-GAS"
+    device_id: "GAS-4F-MAIN"
+    device_type: "gas"
+    interval: 60
+    points:
+      - code: "WH-G-001"
+        name: "餐饮区天然气总量"
+        type: accumulate
+        unit: "m3"
+        base_value: 345000.0
+        hourly_increment: [5.0, 40.0]
+        pattern: office
+
+  # ============================================================
+  # 给排水 — 网关 GW-HVAC
+  # ============================================================
+
+  - name: "全楼总水表"
+    protocol: mqtt
+    gateway_id: "GW-HVAC"
+    device_id: "WATER-MAIN"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "WH-W-001"
+        name: "全楼总用水量"
+        type: accumulate
+        unit: "m3"
+        base_value: 234000.0
+        hourly_increment: [5.0, 40.0]
+        pattern: office

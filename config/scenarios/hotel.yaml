@@ -1,0 +1,334 @@
+# ============================================================
+# 凯悦国际大酒店 — 五星级酒店
+# ============================================================
+#
+# 行业：酒店（客房 + 餐饮 + 会议 + 泳池 + 洗衣房）
+# 规模：28 层，320 间客房，建筑面积 45000 m²
+# 能源：电力、天然气（厨房+锅炉）、水、热水
+# 特点：全楼宇自控系统（BAS），西门子 Desigo CC
+#       客房能耗按入住率波动，餐饮按餐次波动
+#       洗衣房和泳池能耗稳定
+#       全 MQTT 上报（通过 BAS 网关）
+#
+# 用能单元树：
+#   凯悦国际大酒店
+#   ├── 客房区
+#   │   ├── 1-10F 标准客房
+#   │   ├── 11-20F 商务客房
+#   │   └── 21-28F 行政套房
+#   ├── 餐饮区
+#   │   ├── 全日餐厅（1F）
+#   │   ├── 中餐厅（2F）
+#   │   └── 宴会厅（3F）
+#   ├── 会议中心（3F-4F）
+#   ├── 康体中心
+#   │   ├── 健身房
+#   │   ├── 游泳池
+#   │   └── SPA
+#   ├── 洗衣房
+#   ├── 大堂及公共区
+#   └── 机电设施
+#       ├── 变配电室
+#       ├── 中央空调
+#       ├── 锅炉房（热水+蒸汽）
+#       └── 电梯机房
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 供配电 — 网关 GW-POWER
+  # ============================================================
+
+  - name: "全楼总进线电表"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM820-MAIN"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "KY-E-001"
+        name: "全楼总有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 34560000.0
+        hourly_increment: [300.0, 1200.0]
+        pattern: office
+      - code: "KY-E-002"
+        name: "全楼总功率"
+        type: instant
+        unit: "kW"
+        range: [200.0, 900.0]
+        pattern: office
+      - code: "KY-E-003"
+        name: "全楼功率因数"
+        type: instant
+        unit: ""
+        range: [0.89, 0.97]
+        pattern: constant
+
+  # ============================================================
+  # 客房区 — 网关 GW-ROOM
+  # ============================================================
+
+  - name: "1-10F标准客房电表"
+    protocol: mqtt
+    gateway_id: "GW-ROOM"
+    device_id: "PM710-RM-01"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "KY-E-010"
+        name: "标准客房区电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5670000.0
+        hourly_increment: [30.0, 150.0]
+        pattern: office         # 白天退房打扫低，傍晚入住后升高
+
+  - name: "11-20F商务客房电表"
+    protocol: mqtt
+    gateway_id: "GW-ROOM"
+    device_id: "PM710-RM-02"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "KY-E-011"
+        name: "商务客房区电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 6780000.0
+        hourly_increment: [35.0, 170.0]
+        pattern: office
+
+  - name: "21-28F行政套房电表"
+    protocol: mqtt
+    gateway_id: "GW-ROOM"
+    device_id: "PM710-RM-03"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "KY-E-012"
+        name: "行政套房区电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 4560000.0
+        hourly_increment: [25.0, 130.0]
+        pattern: office
+
+  # ============================================================
+  # 餐饮区 — 网关 GW-FB（Food & Beverage）
+  # ============================================================
+
+  - name: "全日餐厅电表"
+    protocol: mqtt
+    gateway_id: "GW-FB"
+    device_id: "PM710-REST-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KY-E-020"
+        name: "全日餐厅电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2340000.0
+        hourly_increment: [15.0, 80.0]
+        pattern: industrial      # 早中晚三个用餐高峰
+
+  - name: "中餐厅电表"
+    protocol: mqtt
+    gateway_id: "GW-FB"
+    device_id: "PM710-REST-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KY-E-021"
+        name: "中餐厅电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1890000.0
+        hourly_increment: [10.0, 65.0]
+        pattern: industrial
+
+  - name: "宴会厅电表"
+    protocol: mqtt
+    gateway_id: "GW-FB"
+    device_id: "PM710-REST-03"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "KY-E-022"
+        name: "宴会厅电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1230000.0
+        hourly_increment: [5.0, 50.0]
+        pattern: office
+
+  - name: "厨房天然气总表"
+    protocol: mqtt
+    gateway_id: "GW-FB"
+    device_id: "GAS-KITCHEN"
+    device_type: "gas"
+    interval: 60
+    points:
+      - code: "KY-G-001"
+        name: "厨房天然气用量"
+        type: accumulate
+        unit: "m3"
+        base_value: 123000.0
+        hourly_increment: [3.0, 25.0]
+        pattern: industrial
+
+  # ============================================================
+  # 康体中心 + 洗衣房 — 网关 GW-ROOM
+  # ============================================================
+
+  - name: "游泳池设备电表"
+    protocol: mqtt
+    gateway_id: "GW-ROOM"
+    device_id: "PM710-POOL"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "KY-E-030"
+        name: "泳池电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 890000.0
+        hourly_increment: [10.0, 30.0]
+        pattern: constant       # 循环泵 24 小时
+
+  - name: "洗衣房电表"
+    protocol: mqtt
+    gateway_id: "GW-ROOM"
+    device_id: "PM710-LAUNDRY"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KY-E-035"
+        name: "洗衣房电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1560000.0
+        hourly_increment: [15.0, 60.0]
+        pattern: industrial
+
+  - name: "洗衣房蒸汽表"
+    protocol: mqtt
+    gateway_id: "GW-ROOM"
+    device_id: "STEAM-LAUNDRY"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "KY-S-001"
+        name: "洗衣房蒸汽用量"
+        type: accumulate
+        unit: "t"
+        base_value: 12300.0
+        hourly_increment: [0.3, 1.5]
+        pattern: industrial
+
+  # ============================================================
+  # 机电设施 — 网关 GW-BAS
+  # ============================================================
+
+  - name: "1号冷水机组电表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "PM810-CH-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KY-E-050"
+        name: "1号冷水机组电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5670000.0
+        hourly_increment: [40.0, 250.0]
+        pattern: hvac
+      - code: "KY-E-051"
+        name: "1号冷水机组功率"
+        type: instant
+        unit: "kW"
+        range: [30.0, 180.0]
+        pattern: hvac
+
+  - name: "2号冷水机组电表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "PM810-CH-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KY-E-052"
+        name: "2号冷水机组电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 4890000.0
+        hourly_increment: [35.0, 220.0]
+        pattern: hvac
+
+  - name: "锅炉天然气表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "GAS-BOILER"
+    device_type: "gas"
+    interval: 60
+    points:
+      - code: "KY-G-010"
+        name: "锅炉天然气用量"
+        type: accumulate
+        unit: "m3"
+        base_value: 234000.0
+        hourly_increment: [5.0, 35.0]
+        pattern: office
+
+  - name: "电梯群电表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "PM710-LIFT"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "KY-E-060"
+        name: "电梯电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1230000.0
+        hourly_increment: [8.0, 35.0]
+        pattern: office
+
+  - name: "大堂及公共照明电表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "PM710-LOBBY"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "KY-E-065"
+        name: "公共照明电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2340000.0
+        hourly_increment: [15.0, 50.0]
+        pattern: office
+
+  - name: "全楼总水表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "WATER-MAIN"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "KY-W-001"
+        name: "全楼总用水量"
+        type: accumulate
+        unit: "m3"
+        base_value: 178000.0
+        hourly_increment: [5.0, 35.0]
+        pattern: office

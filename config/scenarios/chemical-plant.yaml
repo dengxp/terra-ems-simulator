@@ -1,0 +1,403 @@
+# ============================================================
+# 中化新材料有限公司 — 精细化工企业
+# ============================================================
+#
+# 行业：精细化工（涂料 + 树脂 + 助剂）
+# 规模：年产值 8 亿，员工 350 人
+# 能源：电力、蒸汽（外购）、天然气、导热油、水、氮气
+# 特点：连续生产（三班倒），工艺复杂，蒸汽用量大
+#       防爆区域设备需防爆网关
+#       部分车间 24 小时运行（反应釜不能停）
+#       老旧计量与新设备混合，Modbus + MQTT 并存
+#
+# 用能单元树：
+#   中化新材料
+#   ├── 涂料车间
+#   │   ├── 研磨工段
+#   │   ├── 调漆工段
+#   │   └── 灌装工段
+#   ├── 树脂合成车间（24小时运行）
+#   │   ├── 反应工段
+#   │   └── 蒸馏工段
+#   ├── 助剂车间
+#   ├── 罐区及仓库
+#   ├── 污水处理站
+#   ├── 办公楼
+#   └── 公用设施
+#       ├── 变配电室
+#       ├── 蒸汽分汽缸
+#       ├── 导热油炉
+#       ├── 循环水站
+#       ├── 空压站
+#       └── 氮气站
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 变配电室 — Modbus TCP 直连（老旧保护装置）
+  # ============================================================
+
+  - name: "10kV 总进线表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5200
+    slave_id: 1
+    interval: 10
+    registers:
+      - point_code: "ZH-E-001"
+        name: "全厂总有功电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 67800000.0
+        hourly_increment: [600.0, 2000.0]
+        pattern: constant       # 化工连续生产，负荷较恒定
+        scale: 1.0
+        offset: 0.0
+      - point_code: "ZH-E-002"
+        name: "全厂总功率"
+        address: 2
+        data_type: float32
+        range: [500.0, 1500.0]
+        pattern: constant
+        type: instant
+        scale: 1.0
+        offset: 0.0
+      - point_code: "ZH-E-003"
+        name: "最大需量"
+        address: 4
+        data_type: float32
+        range: [1200.0, 1600.0]
+        pattern: constant
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  - name: "涂料车间馈线表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5200
+    slave_id: 2
+    interval: 15
+    registers:
+      - point_code: "ZH-E-004"
+        name: "涂料车间电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 12300000.0
+        hourly_increment: [100.0, 400.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "树脂车间馈线表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5200
+    slave_id: 3
+    interval: 15
+    registers:
+      - point_code: "ZH-E-005"
+        name: "树脂车间电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 23400000.0
+        hourly_increment: [200.0, 600.0]
+        pattern: constant       # 24小时连续生产
+        scale: 1.0
+        offset: 0.0
+
+  # ============================================================
+  # 涂料车间 — 防爆网关 GW-COAT（MQTT）
+  # ============================================================
+
+  - name: "砂磨机电表"
+    protocol: mqtt
+    gateway_id: "GW-COAT"
+    device_id: "PM710-MILL-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "ZH-E-010"
+        name: "砂磨机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2340000.0
+        hourly_increment: [30.0, 120.0]
+        pattern: industrial
+      - code: "ZH-E-011"
+        name: "砂磨机功率"
+        type: instant
+        unit: "kW"
+        range: [15.0, 90.0]
+        pattern: industrial
+
+  - name: "高速分散机电表"
+    protocol: mqtt
+    gateway_id: "GW-COAT"
+    device_id: "PM710-DISP-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "ZH-E-012"
+        name: "分散机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1230000.0
+        hourly_increment: [15.0, 65.0]
+        pattern: industrial
+
+  - name: "涂料灌装线电表"
+    protocol: mqtt
+    gateway_id: "GW-COAT"
+    device_id: "PM710-FILL-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "ZH-E-013"
+        name: "灌装线电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 567000.0
+        hourly_increment: [5.0, 25.0]
+        pattern: industrial
+
+  # ============================================================
+  # 树脂合成车间 — 防爆网关 GW-RESIN（24小时不停）
+  # ============================================================
+
+  - name: "1号反应釜电表"
+    protocol: mqtt
+    gateway_id: "GW-RESIN"
+    device_id: "PM710-REACTOR-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "ZH-E-020"
+        name: "1号反应釜电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5670000.0
+        hourly_increment: [50.0, 120.0]
+        pattern: constant       # 24小时运行
+      - code: "ZH-E-021"
+        name: "1号反应釜功率"
+        type: instant
+        unit: "kW"
+        range: [30.0, 90.0]
+        pattern: constant
+
+  - name: "2号反应釜电表"
+    protocol: mqtt
+    gateway_id: "GW-RESIN"
+    device_id: "PM710-REACTOR-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "ZH-E-022"
+        name: "2号反应釜电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 4890000.0
+        hourly_increment: [45.0, 110.0]
+        pattern: constant
+
+  - name: "3号反应釜电表"
+    protocol: mqtt
+    gateway_id: "GW-RESIN"
+    device_id: "PM710-REACTOR-03"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "ZH-E-023"
+        name: "3号反应釜电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5120000.0
+        hourly_increment: [48.0, 115.0]
+        pattern: constant
+
+  - name: "蒸馏塔电表"
+    protocol: mqtt
+    gateway_id: "GW-RESIN"
+    device_id: "PM710-DISTIL-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "ZH-E-024"
+        name: "蒸馏塔电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 3450000.0
+        hourly_increment: [30.0, 80.0]
+        pattern: constant
+
+  - name: "树脂车间蒸汽表"
+    protocol: mqtt
+    gateway_id: "GW-RESIN"
+    device_id: "STEAM-RESIN"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "ZH-S-001"
+        name: "树脂车间蒸汽用量"
+        type: accumulate
+        unit: "t"
+        base_value: 89000.0
+        hourly_increment: [3.0, 10.0]
+        pattern: constant
+
+  - name: "树脂车间温度传感器"
+    protocol: mqtt
+    gateway_id: "GW-RESIN"
+    device_id: "ENV-RESIN"
+    device_type: "sensor"
+    interval: 15
+    points:
+      - code: "ZH-T-001"
+        name: "1号反应釜温度"
+        type: instant
+        unit: "℃"
+        range: [120.0, 200.0]
+        pattern: constant
+      - code: "ZH-T-002"
+        name: "2号反应釜温度"
+        type: instant
+        unit: "℃"
+        range: [130.0, 210.0]
+        pattern: constant
+
+  # ============================================================
+  # 公用设施 — Modbus TCP 直连
+  # ============================================================
+
+  - name: "外购蒸汽总表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5201
+    slave_id: 1
+    interval: 60
+    registers:
+      - point_code: "ZH-S-010"
+        name: "外购蒸汽总量"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 345000.0
+        hourly_increment: [10.0, 50.0]
+        pattern: constant
+        scale: 1.0
+        offset: 0.0
+
+  - name: "导热油炉天然气表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5201
+    slave_id: 2
+    interval: 60
+    registers:
+      - point_code: "ZH-G-001"
+        name: "导热油炉天然气"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 234000.0
+        hourly_increment: [8.0, 40.0]
+        pattern: constant
+        scale: 1.0
+        offset: 0.0
+
+  - name: "循环水泵电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5202
+    slave_id: 1
+    interval: 30
+    registers:
+      - point_code: "ZH-E-050"
+        name: "循环水泵电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 4560000.0
+        hourly_increment: [40.0, 100.0]
+        pattern: constant
+        scale: 1.0
+        offset: 0.0
+
+  - name: "空压机电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5202
+    slave_id: 2
+    interval: 30
+    registers:
+      - point_code: "ZH-E-051"
+        name: "空压机电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 2340000.0
+        hourly_increment: [20.0, 80.0]
+        pattern: constant
+        scale: 1.0
+        offset: 0.0
+
+  - name: "全厂总水表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5203
+    slave_id: 1
+    interval: 60
+    registers:
+      - point_code: "ZH-W-001"
+        name: "全厂总用水量"
+        address: 0
+        data_type: uint32
+        type: accumulate
+        base_value: 12300000
+        hourly_increment: [500, 3000]
+        pattern: constant
+        scale: 0.01
+        offset: 0.0
+
+  - name: "污水处理站电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5203
+    slave_id: 2
+    interval: 60
+    registers:
+      - point_code: "ZH-E-060"
+        name: "污水处理电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 890000.0
+        hourly_increment: [10.0, 30.0]
+        pattern: constant
+        scale: 1.0
+        offset: 0.0
+
+  # --- 办公楼 ---
+  - name: "办公楼电表"
+    protocol: mqtt
+    gateway_id: "GW-COAT"
+    device_id: "PM710-OFFICE"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "ZH-E-070"
+        name: "办公楼电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 234000.0
+        hourly_increment: [3.0, 18.0]
+        pattern: office

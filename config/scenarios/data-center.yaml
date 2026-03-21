@@ -1,0 +1,391 @@
+# ============================================================
+# 云擎数据中心 — IDC 数据中心
+# ============================================================
+#
+# 行业：互联网数据中心（IDC）
+# 规模：2000 个机柜，T3+ 级别，总 IT 负荷 8MW
+# 能源：电力（双路 10kV + 柴发应急）
+# 特点：PUE 监测是核心指标，精密空调+UPS 能耗占比大
+#       7×24 不间断运行，电力可靠性要求极高
+#       全网关，高频采集（5-10秒），数据量大
+#       需要实时监控 PUE = 总电力 / IT 设备电力
+#
+# 用能单元树：
+#   云擎数据中心
+#   ├── A 区机房（800柜）
+#   ├── B 区机房（800柜）
+#   ├── C 区机房（400柜）
+#   ├── 供配电系统
+#   │   ├── 高压配电室
+#   │   ├── UPS-A（2×800kVA）
+#   │   ├── UPS-B（2×800kVA）
+#   │   └── UPS-C（2×500kVA）
+#   ├── 制冷系统
+#   │   ├── 冷冻水主机（4台离心机）
+#   │   ├── 精密空调 A 区
+#   │   ├── 精密空调 B 区
+#   │   └── 精密空调 C 区
+#   ├── 照明及辅助
+#   └── 柴油发电机组
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 高压配电 — 网关 GW-HV（高频采集 10 秒）
+  # ============================================================
+
+  - name: "1路市电进线总表"
+    protocol: mqtt
+    gateway_id: "GW-HV"
+    device_id: "PM870-HV-01"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "YQ-E-001"
+        name: "1路市电有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 123000000.0
+        hourly_increment: [4000.0, 6000.0]
+        pattern: constant       # 数据中心 24 小时恒定负荷
+      - code: "YQ-E-002"
+        name: "1路市电有功功率"
+        type: instant
+        unit: "kW"
+        range: [3500.0, 4500.0]
+        pattern: constant
+      - code: "YQ-E-003"
+        name: "1路市电功率因数"
+        type: instant
+        unit: ""
+        range: [0.94, 0.99]
+        pattern: constant
+
+  - name: "2路市电进线总表"
+    protocol: mqtt
+    gateway_id: "GW-HV"
+    device_id: "PM870-HV-02"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "YQ-E-004"
+        name: "2路市电有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 115000000.0
+        hourly_increment: [3800.0, 5500.0]
+        pattern: constant
+      - code: "YQ-E-005"
+        name: "2路市电有功功率"
+        type: instant
+        unit: "kW"
+        range: [3200.0, 4200.0]
+        pattern: constant
+
+  # ============================================================
+  # UPS 系统 — 网关 GW-UPS
+  # ============================================================
+
+  - name: "UPS-A1 输出电表"
+    protocol: mqtt
+    gateway_id: "GW-UPS"
+    device_id: "PM810-UPS-A1"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "YQ-E-010"
+        name: "UPS-A1 输出电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 34560000.0
+        hourly_increment: [600.0, 750.0]
+        pattern: constant
+      - code: "YQ-E-011"
+        name: "UPS-A1 输出功率"
+        type: instant
+        unit: "kW"
+        range: [550.0, 680.0]
+        pattern: constant
+      - code: "YQ-E-012"
+        name: "UPS-A1 负载率"
+        type: instant
+        unit: "%"
+        range: [68.0, 85.0]
+        pattern: constant
+
+  - name: "UPS-A2 输出电表"
+    protocol: mqtt
+    gateway_id: "GW-UPS"
+    device_id: "PM810-UPS-A2"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "YQ-E-013"
+        name: "UPS-A2 输出电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 32100000.0
+        hourly_increment: [580.0, 720.0]
+        pattern: constant
+
+  - name: "UPS-B1 输出电表"
+    protocol: mqtt
+    gateway_id: "GW-UPS"
+    device_id: "PM810-UPS-B1"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "YQ-E-014"
+        name: "UPS-B1 输出电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 33800000.0
+        hourly_increment: [590.0, 730.0]
+        pattern: constant
+
+  - name: "UPS-B2 输出电表"
+    protocol: mqtt
+    gateway_id: "GW-UPS"
+    device_id: "PM810-UPS-B2"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "YQ-E-015"
+        name: "UPS-B2 输出电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 31200000.0
+        hourly_increment: [560.0, 700.0]
+        pattern: constant
+
+  - name: "UPS-C1 输出电表"
+    protocol: mqtt
+    gateway_id: "GW-UPS"
+    device_id: "PM810-UPS-C1"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "YQ-E-016"
+        name: "UPS-C1 输出电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 18900000.0
+        hourly_increment: [350.0, 450.0]
+        pattern: constant
+
+  - name: "UPS-C2 输出电表"
+    protocol: mqtt
+    gateway_id: "GW-UPS"
+    device_id: "PM810-UPS-C2"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "YQ-E-017"
+        name: "UPS-C2 输出电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 17600000.0
+        hourly_increment: [320.0, 420.0]
+        pattern: constant
+
+  # ============================================================
+  # 制冷系统 — 网关 GW-COOL
+  # ============================================================
+
+  - name: "1号离心冷水机组"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "PM810-CH-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "YQ-E-030"
+        name: "1号冷机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 12340000.0
+        hourly_increment: [150.0, 500.0]
+        pattern: hvac
+      - code: "YQ-E-031"
+        name: "1号冷机功率"
+        type: instant
+        unit: "kW"
+        range: [100.0, 380.0]
+        pattern: hvac
+
+  - name: "2号离心冷水机组"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "PM810-CH-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "YQ-E-032"
+        name: "2号冷机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 11560000.0
+        hourly_increment: [140.0, 480.0]
+        pattern: hvac
+
+  - name: "3号离心冷水机组"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "PM810-CH-03"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "YQ-E-033"
+        name: "3号冷机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 10890000.0
+        hourly_increment: [130.0, 460.0]
+        pattern: hvac
+
+  - name: "4号离心冷水机组"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "PM810-CH-04"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "YQ-E-034"
+        name: "4号冷机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 9870000.0
+        hourly_increment: [120.0, 440.0]
+        pattern: hvac
+
+  - name: "冷却塔群电表"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "PM710-CT"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "YQ-E-036"
+        name: "冷却塔电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 3450000.0
+        hourly_increment: [30.0, 120.0]
+        pattern: hvac
+
+  - name: "精密空调 A 区总表"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "PM810-CRAC-A"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "YQ-E-040"
+        name: "A区精密空调电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5670000.0
+        hourly_increment: [50.0, 200.0]
+        pattern: constant
+
+  - name: "精密空调 B 区总表"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "PM810-CRAC-B"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "YQ-E-041"
+        name: "B区精密空调电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5340000.0
+        hourly_increment: [48.0, 190.0]
+        pattern: constant
+
+  - name: "精密空调 C 区总表"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "PM810-CRAC-C"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "YQ-E-042"
+        name: "C区精密空调电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2890000.0
+        hourly_increment: [25.0, 100.0]
+        pattern: constant
+
+  # --- 环境监测 ---
+  - name: "A区机房环境"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "ENV-A"
+    device_type: "sensor"
+    interval: 15
+    points:
+      - code: "YQ-T-001"
+        name: "A区冷通道温度"
+        type: instant
+        unit: "℃"
+        range: [22.0, 26.0]
+        pattern: constant
+      - code: "YQ-H-001"
+        name: "A区机房湿度"
+        type: instant
+        unit: "%RH"
+        range: [40.0, 60.0]
+        pattern: constant
+
+  - name: "B区机房环境"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "ENV-B"
+    device_type: "sensor"
+    interval: 15
+    points:
+      - code: "YQ-T-002"
+        name: "B区冷通道温度"
+        type: instant
+        unit: "℃"
+        range: [22.0, 26.0]
+        pattern: constant
+
+  # --- 照明及辅助 ---
+  - name: "照明及辅助电表"
+    protocol: mqtt
+    gateway_id: "GW-HV"
+    device_id: "PM710-AUX"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "YQ-E-090"
+        name: "照明辅助电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 890000.0
+        hourly_increment: [8.0, 25.0]
+        pattern: constant
+
+  # --- 全厂总水表 ---
+  - name: "数据中心总水表"
+    protocol: mqtt
+    gateway_id: "GW-COOL"
+    device_id: "WATER-DC"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "YQ-W-001"
+        name: "总用水量"
+        type: accumulate
+        unit: "m3"
+        base_value: 67800.0
+        hourly_increment: [3.0, 15.0]
+        pattern: constant

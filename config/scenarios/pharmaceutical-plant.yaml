@@ -1,0 +1,406 @@
+# ============================================================
+# 康瑞制药有限公司 — 制药企业（GMP 规范）
+# ============================================================
+#
+# 行业：制药（片剂 + 注射剂）
+# 规模：年产值 3 亿，员工 600 人
+# 能源：电力、蒸汽（纯化水制备）、压缩空气（洁净级）、冷冻水、水
+# 特点：GMP 要求严格，洁净室能耗占比高，温湿度监控密集
+#       HVAC 系统复杂（AHU + 冷水机组 + 锅炉）
+#       全网关覆盖，部分区域有楼宇自控（BAS）
+#
+# 用能单元树：
+#   康瑞制药
+#   ├── 固体制剂车间
+#   │   ├── 称量配料间（D级洁净）
+#   │   ├── 制粒干燥间（D级洁净）
+#   │   ├── 压片间（D级洁净）
+#   │   ├── 包衣间
+#   │   └── 内包装间（D级洁净）
+#   ├── 注射剂车间
+#   │   ├── 配液间（C级洁净）
+#   │   ├── 灌装间（A/B级洁净）
+#   │   └── 灭菌间
+#   ├── 质检中心
+#   ├── 原料仓库
+#   ├── 成品仓库
+#   ├── 办公楼
+#   └── 公用设施
+#       ├── 配电房
+#       ├── 纯化水站
+#       ├── 空调净化机房
+#       ├── 冷冻站
+#       ├── 锅炉房
+#       └── 压缩空气站
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 配电房 — 网关 GW-POWER
+  # ============================================================
+
+  - name: "全厂总进线电表"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM820-MAIN"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "KR-E-001"
+        name: "全厂总有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 23450000.0
+        hourly_increment: [300.0, 1500.0]
+        pattern: industrial
+      - code: "KR-E-002"
+        name: "全厂总功率"
+        type: instant
+        unit: "kW"
+        range: [200.0, 1100.0]
+        pattern: industrial
+      - code: "KR-E-003"
+        name: "全厂功率因数"
+        type: instant
+        unit: ""
+        range: [0.88, 0.97]
+        pattern: constant
+
+  # ============================================================
+  # 固体制剂车间 — 网关 GW-SOLID
+  # ============================================================
+
+  - name: "固体车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-SOLID"
+    device_id: "PM810-SOLID"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-010"
+        name: "固体车间总电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 4560000.0
+        hourly_increment: [60.0, 300.0]
+        pattern: industrial
+      - code: "KR-E-011"
+        name: "固体车间总功率"
+        type: instant
+        unit: "kW"
+        range: [40.0, 220.0]
+        pattern: industrial
+
+  - name: "流化床干燥机电表"
+    protocol: mqtt
+    gateway_id: "GW-SOLID"
+    device_id: "PM710-SOLID-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-012"
+        name: "流化床电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1230000.0
+        hourly_increment: [20.0, 80.0]
+        pattern: industrial
+
+  - name: "高速压片机电表"
+    protocol: mqtt
+    gateway_id: "GW-SOLID"
+    device_id: "PM710-SOLID-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-013"
+        name: "压片机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 567000.0
+        hourly_increment: [8.0, 35.0]
+        pattern: industrial
+
+  - name: "包衣机电表"
+    protocol: mqtt
+    gateway_id: "GW-SOLID"
+    device_id: "PM710-SOLID-03"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-014"
+        name: "包衣机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 345000.0
+        hourly_increment: [5.0, 25.0]
+        pattern: industrial
+
+  # --- 洁净室温湿度监测 ---
+  - name: "固体车间环境传感器"
+    protocol: mqtt
+    gateway_id: "GW-SOLID"
+    device_id: "ENV-SOLID"
+    device_type: "sensor"
+    interval: 30
+    points:
+      - code: "KR-T-001"
+        name: "D级洁净区温度"
+        type: instant
+        unit: "℃"
+        range: [18.0, 26.0]
+        pattern: constant
+      - code: "KR-H-001"
+        name: "D级洁净区湿度"
+        type: instant
+        unit: "%RH"
+        range: [35.0, 65.0]
+        pattern: constant
+      - code: "KR-P-001"
+        name: "D级洁净区压差"
+        type: instant
+        unit: "Pa"
+        range: [10.0, 15.0]
+        pattern: constant
+
+  # ============================================================
+  # 注射剂车间 — 网关 GW-INJECT
+  # ============================================================
+
+  - name: "注射剂车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-INJECT"
+    device_id: "PM810-INJECT"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-020"
+        name: "注射剂车间总电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5670000.0
+        hourly_increment: [80.0, 400.0]
+        pattern: industrial
+
+  - name: "灌装机电表"
+    protocol: mqtt
+    gateway_id: "GW-INJECT"
+    device_id: "PM710-INJECT-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-021"
+        name: "灌装机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 890000.0
+        hourly_increment: [12.0, 50.0]
+        pattern: industrial
+
+  - name: "灭菌柜电表"
+    protocol: mqtt
+    gateway_id: "GW-INJECT"
+    device_id: "PM710-INJECT-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-022"
+        name: "灭菌柜电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1560000.0
+        hourly_increment: [25.0, 100.0]
+        pattern: industrial
+
+  - name: "注射剂车间蒸汽表"
+    protocol: mqtt
+    gateway_id: "GW-INJECT"
+    device_id: "STEAM-INJECT"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "KR-S-001"
+        name: "注射剂蒸汽用量"
+        type: accumulate
+        unit: "t"
+        base_value: 12340.0
+        hourly_increment: [0.5, 3.0]
+        pattern: industrial
+
+  - name: "注射剂环境传感器"
+    protocol: mqtt
+    gateway_id: "GW-INJECT"
+    device_id: "ENV-INJECT"
+    device_type: "sensor"
+    interval: 15
+    points:
+      - code: "KR-T-010"
+        name: "A/B级洁净区温度"
+        type: instant
+        unit: "℃"
+        range: [18.0, 25.0]
+        pattern: constant
+      - code: "KR-H-010"
+        name: "A/B级洁净区湿度"
+        type: instant
+        unit: "%RH"
+        range: [30.0, 60.0]
+        pattern: constant
+      - code: "KR-P-010"
+        name: "A级区压差"
+        type: instant
+        unit: "Pa"
+        range: [15.0, 25.0]
+        pattern: constant
+
+  # ============================================================
+  # 公用设施 — 网关 GW-UTILITY（大量 HVAC 设备）
+  # ============================================================
+
+  - name: "1号冷水机组电表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "PM710-CHILLER-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-050"
+        name: "1号冷水机组电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 3450000.0
+        hourly_increment: [50.0, 250.0]
+        pattern: hvac
+      - code: "KR-E-051"
+        name: "1号冷水机组功率"
+        type: instant
+        unit: "kW"
+        range: [30.0, 180.0]
+        pattern: hvac
+
+  - name: "2号冷水机组电表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "PM710-CHILLER-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-052"
+        name: "2号冷水机组电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2980000.0
+        hourly_increment: [40.0, 220.0]
+        pattern: hvac
+
+  - name: "AHU 空调箱总电表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "PM710-AHU"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "KR-E-054"
+        name: "AHU 总电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2340000.0
+        hourly_increment: [30.0, 150.0]
+        pattern: hvac
+
+  - name: "纯化水系统电表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "PM710-PW"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "KR-E-056"
+        name: "纯化水电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 456000.0
+        hourly_increment: [5.0, 20.0]
+        pattern: constant
+
+  - name: "纯化水产量表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "WATER-PW"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "KR-W-001"
+        name: "纯化水产量"
+        type: accumulate
+        unit: "m3"
+        base_value: 23400.0
+        hourly_increment: [0.5, 3.0]
+        pattern: industrial
+
+  - name: "锅炉天然气表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "GAS-BOILER"
+    device_type: "gas"
+    interval: 60
+    points:
+      - code: "KR-G-001"
+        name: "锅炉天然气用量"
+        type: accumulate
+        unit: "m3"
+        base_value: 567000.0
+        hourly_increment: [15.0, 80.0]
+        pattern: industrial
+
+  - name: "全厂总水表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "WATER-MAIN"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "KR-W-010"
+        name: "全厂总用水量"
+        type: accumulate
+        unit: "m3"
+        base_value: 89000.0
+        hourly_increment: [3.0, 20.0]
+        pattern: industrial
+
+  # --- 办公楼 ---
+  - name: "办公楼总电表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "PM710-OFFICE"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "KR-E-070"
+        name: "办公楼电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 234000.0
+        hourly_increment: [5.0, 25.0]
+        pattern: office
+
+  # --- 质检中心 ---
+  - name: "质检中心电表"
+    protocol: mqtt
+    gateway_id: "GW-UTILITY"
+    device_id: "PM710-QC"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "KR-E-080"
+        name: "质检中心电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 123000.0
+        hourly_increment: [2.0, 12.0]
+        pattern: office

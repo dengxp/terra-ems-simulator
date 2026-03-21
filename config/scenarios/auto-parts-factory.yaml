@@ -1,0 +1,605 @@
+# ============================================================
+# 鼎力汽车零部件股份有限公司 — 大型汽车零部件制造
+# ============================================================
+#
+# 行业：汽车零部件制造（铸造+机加工+涂装+装配）
+# 规模：年产值 5 亿，员工 1200 人，占地 80 亩
+# 能源：电力（10kV 双路进线）、天然气、压缩空气、水、蒸汽
+# 特点：大型工厂，多车间，双路供电，大功率设备
+#       CNC 加工中心数十台，涂装线用气量大
+#       部分车间有网关，部分老旧设备串口直连
+#
+# 用能单元树：
+#   鼎力汽车零部件
+#   ├── 铸造车间
+#   │   ├── 熔炼工段
+#   │   └── 造型工段
+#   ├── 机加工车间
+#   │   ├── CNC 加工区
+#   │   ├── 普车区
+#   │   └── 磨床区
+#   ├── 涂装车间
+#   │   ├── 前处理
+#   │   ├── 喷涂线
+#   │   └── 烘干炉
+#   ├── 装配车间
+#   │   ├── 总装线
+#   │   └── 检测区
+#   ├── 仓储物流
+#   ├── 办公研发楼
+#   └── 公用设施
+#       ├── 110kV/10kV 变电站
+#       ├── 空压站（3台螺杆空压机）
+#       ├── 锅炉房（2台燃气锅炉）
+#       ├── 污水处理站
+#       └── 中央空调机房
+#
+# 网关/接入：
+#   GW-CAST（铸造车间，映翰通IR915，MQTT）
+#   GW-CNC（机加工车间，研华WISE-4051，MQTT）
+#   GW-PAINT（涂装车间，映翰通IR915，MQTT）
+#   GW-ASSY（装配车间，有人USR-G786，MQTT）
+#   变电站：串口服务器 Modbus TCP（老旧保护装置）
+#   空压站/锅炉房：串口服务器 Modbus TCP
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 变电站 — 10kV 高压计量（Modbus TCP 直连，无网关）
+  # ============================================================
+
+  - name: "1号主变进线表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5100
+    slave_id: 1
+    interval: 10
+    registers:
+      - point_code: "DL-E-001"
+        name: "1号主变有功电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 45670000.0
+        hourly_increment: [500.0, 2500.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+      - point_code: "DL-E-002"
+        name: "1号主变有功功率"
+        address: 2
+        data_type: float32
+        range: [400.0, 1800.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+      - point_code: "DL-E-003"
+        name: "1号主变最大需量"
+        address: 4
+        data_type: float32
+        range: [1500.0, 2000.0]
+        pattern: constant
+        type: instant
+        scale: 1.0
+        offset: 0.0
+      - point_code: "DL-E-004"
+        name: "1号主变功率因数"
+        address: 6
+        data_type: float32
+        range: [0.88, 0.97]
+        pattern: constant
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  - name: "2号主变进线表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5100
+    slave_id: 2
+    interval: 10
+    registers:
+      - point_code: "DL-E-005"
+        name: "2号主变有功电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 38900000.0
+        hourly_increment: [400.0, 2000.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+      - point_code: "DL-E-006"
+        name: "2号主变有功功率"
+        address: 2
+        data_type: float32
+        range: [350.0, 1500.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  # ============================================================
+  # 铸造车间 — 网关 GW-CAST（高能耗）
+  # ============================================================
+
+  - name: "铸造车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-CAST"
+    device_id: "PM820-CAST"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "DL-E-010"
+        name: "铸造车间总电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 12340000.0
+        hourly_increment: [200.0, 900.0]
+        pattern: industrial
+      - code: "DL-E-011"
+        name: "铸造车间总功率"
+        type: instant
+        unit: "kW"
+        range: [150.0, 650.0]
+        pattern: industrial
+
+  - name: "中频感应炉电表"
+    protocol: mqtt
+    gateway_id: "GW-CAST"
+    device_id: "PM710-CAST-01"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "DL-E-012"
+        name: "中频炉电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 7890000.0
+        hourly_increment: [120.0, 500.0]
+        pattern: industrial
+      - code: "DL-E-013"
+        name: "中频炉功率"
+        type: instant
+        unit: "kW"
+        range: [0.0, 400.0]
+        pattern: industrial
+
+  - name: "铸造天然气表"
+    protocol: mqtt
+    gateway_id: "GW-CAST"
+    device_id: "GAS-CAST"
+    device_type: "gas"
+    interval: 60
+    points:
+      - code: "DL-G-001"
+        name: "铸造天然气用量"
+        type: accumulate
+        unit: "m3"
+        base_value: 345000.0
+        hourly_increment: [15.0, 80.0]
+        pattern: industrial
+
+  # ============================================================
+  # 机加工车间 — 网关 GW-CNC（大量CNC）
+  # ============================================================
+
+  - name: "机加工车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-CNC"
+    device_id: "PM820-CNC"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "DL-E-020"
+        name: "机加工车间总电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 8900000.0
+        hourly_increment: [150.0, 700.0]
+        pattern: industrial
+      - code: "DL-E-021"
+        name: "机加工车间总功率"
+        type: instant
+        unit: "kW"
+        range: [100.0, 500.0]
+        pattern: industrial
+
+  - name: "CNC-01 加工中心电表"
+    protocol: mqtt
+    gateway_id: "GW-CNC"
+    device_id: "PM710-CNC-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "DL-E-022"
+        name: "CNC-01 电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 890000.0
+        hourly_increment: [15.0, 55.0]
+        pattern: industrial
+
+  - name: "CNC-02 加工中心电表"
+    protocol: mqtt
+    gateway_id: "GW-CNC"
+    device_id: "PM710-CNC-02"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "DL-E-023"
+        name: "CNC-02 电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 920000.0
+        hourly_increment: [15.0, 55.0]
+        pattern: industrial
+
+  - name: "CNC-03 加工中心电表"
+    protocol: mqtt
+    gateway_id: "GW-CNC"
+    device_id: "PM710-CNC-03"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "DL-E-024"
+        name: "CNC-03 电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 870000.0
+        hourly_increment: [15.0, 55.0]
+        pattern: industrial
+
+  - name: "CNC-04 加工中心电表"
+    protocol: mqtt
+    gateway_id: "GW-CNC"
+    device_id: "PM710-CNC-04"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "DL-E-025"
+        name: "CNC-04 电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 950000.0
+        hourly_increment: [15.0, 55.0]
+        pattern: industrial
+
+  - name: "CNC-05 加工中心电表"
+    protocol: mqtt
+    gateway_id: "GW-CNC"
+    device_id: "PM710-CNC-05"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "DL-E-026"
+        name: "CNC-05 电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 880000.0
+        hourly_increment: [15.0, 55.0]
+        pattern: industrial
+
+  - name: "机加工压缩空气流量计"
+    protocol: mqtt
+    gateway_id: "GW-CNC"
+    device_id: "FLOW-CNC"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "DL-A-001"
+        name: "CNC区压缩空气流量"
+        type: instant
+        unit: "m3/h"
+        range: [50.0, 300.0]
+        pattern: industrial
+
+  # ============================================================
+  # 涂装车间 — 网关 GW-PAINT
+  # ============================================================
+
+  - name: "涂装车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-PAINT"
+    device_id: "PM820-PAINT"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "DL-E-030"
+        name: "涂装车间总电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5670000.0
+        hourly_increment: [80.0, 400.0]
+        pattern: industrial
+      - code: "DL-E-031"
+        name: "涂装车间总功率"
+        type: instant
+        unit: "kW"
+        range: [60.0, 300.0]
+        pattern: industrial
+
+  - name: "烘干炉电表"
+    protocol: mqtt
+    gateway_id: "GW-PAINT"
+    device_id: "PM710-PAINT-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "DL-E-032"
+        name: "烘干炉电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2340000.0
+        hourly_increment: [40.0, 180.0]
+        pattern: industrial
+
+  - name: "涂装天然气表"
+    protocol: mqtt
+    gateway_id: "GW-PAINT"
+    device_id: "GAS-PAINT"
+    device_type: "gas"
+    interval: 60
+    points:
+      - code: "DL-G-002"
+        name: "涂装天然气用量"
+        type: accumulate
+        unit: "m3"
+        base_value: 234000.0
+        hourly_increment: [10.0, 60.0]
+        pattern: industrial
+
+  - name: "涂装车间水表"
+    protocol: mqtt
+    gateway_id: "GW-PAINT"
+    device_id: "WATER-PAINT"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "DL-W-001"
+        name: "涂装前处理用水"
+        type: accumulate
+        unit: "m3"
+        base_value: 89000.0
+        hourly_increment: [3.0, 20.0]
+        pattern: industrial
+
+  # ============================================================
+  # 装配车间 — 网关 GW-ASSY
+  # ============================================================
+
+  - name: "装配车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-ASSY"
+    device_id: "PM810-ASSY"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "DL-E-040"
+        name: "装配车间总电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1230000.0
+        hourly_increment: [20.0, 100.0]
+        pattern: industrial
+      - code: "DL-E-041"
+        name: "装配车间总功率"
+        type: instant
+        unit: "kW"
+        range: [15.0, 75.0]
+        pattern: industrial
+
+  - name: "检测线电表"
+    protocol: mqtt
+    gateway_id: "GW-ASSY"
+    device_id: "PM710-ASSY-01"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "DL-E-042"
+        name: "检测线电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 234000.0
+        hourly_increment: [3.0, 15.0]
+        pattern: industrial
+
+  # ============================================================
+  # 公用设施 — Modbus TCP 直连
+  # ============================================================
+
+  - name: "1号螺杆空压机电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5101
+    slave_id: 1
+    interval: 15
+    registers:
+      - point_code: "DL-E-050"
+        name: "1号空压机电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 3450000.0
+        hourly_increment: [40.0, 150.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+      - point_code: "DL-E-051"
+        name: "1号空压机功率"
+        address: 2
+        data_type: float32
+        range: [0.0, 110.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  - name: "2号螺杆空压机电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5101
+    slave_id: 2
+    interval: 15
+    registers:
+      - point_code: "DL-E-052"
+        name: "2号空压机电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 3120000.0
+        hourly_increment: [40.0, 150.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "3号螺杆空压机电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5101
+    slave_id: 3
+    interval: 15
+    registers:
+      - point_code: "DL-E-053"
+        name: "3号空压机电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 2890000.0
+        hourly_increment: [30.0, 130.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "1号燃气锅炉天然气表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5102
+    slave_id: 1
+    interval: 60
+    registers:
+      - point_code: "DL-G-010"
+        name: "1号锅炉天然气"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 567000.0
+        hourly_increment: [20.0, 120.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "2号燃气锅炉天然气表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5102
+    slave_id: 2
+    interval: 60
+    registers:
+      - point_code: "DL-G-011"
+        name: "2号锅炉天然气"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 489000.0
+        hourly_increment: [15.0, 100.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "蒸汽总表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5102
+    slave_id: 3
+    interval: 60
+    registers:
+      - point_code: "DL-S-001"
+        name: "全厂蒸汽总量"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 234000.0
+        hourly_increment: [8.0, 50.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "全厂总水表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5103
+    slave_id: 1
+    interval: 60
+    registers:
+      - point_code: "DL-W-010"
+        name: "全厂总用水量"
+        address: 0
+        data_type: uint32
+        type: accumulate
+        base_value: 23400000
+        hourly_increment: [1000, 8000]
+        pattern: industrial
+        scale: 0.01
+        offset: 0.0
+
+  - name: "污水处理站电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5103
+    slave_id: 2
+    interval: 30
+    registers:
+      - point_code: "DL-E-060"
+        name: "污水处理电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 567000.0
+        hourly_increment: [8.0, 25.0]
+        pattern: constant
+        scale: 1.0
+        offset: 0.0
+
+  # --- 办公研发楼 ---
+  - name: "办公研发楼电表"
+    protocol: mqtt
+    gateway_id: "GW-ASSY"
+    device_id: "PM710-OFFICE"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "DL-E-070"
+        name: "办公楼电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 345000.0
+        hourly_increment: [5.0, 30.0]
+        pattern: office
+
+  - name: "中央空调电表"
+    protocol: mqtt
+    gateway_id: "GW-ASSY"
+    device_id: "PM710-HVAC"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "DL-E-075"
+        name: "空调电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 890000.0
+        hourly_increment: [20.0, 120.0]
+        pattern: hvac
+      - code: "DL-E-076"
+        name: "空调功率"
+        type: instant
+        unit: "kW"
+        range: [15.0, 90.0]
+        pattern: hvac
