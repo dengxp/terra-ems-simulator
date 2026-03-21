@@ -1,0 +1,264 @@
+# ============================================================
+# 创智中心 — 商业办公楼宇
+# ============================================================
+#
+# 行业：商业楼宇
+# 规模：地上 18 层，地下 2 层，建筑面积 35000 m²
+# 能源：电力、水、中央空调冷量
+# 特点：已有楼宇自控系统（BAS），通过 MQTT 网关上报
+#       分层分租户计量，空调按面积分摊
+#
+# 用能单元树：
+#   创智中心
+#   ├── 公共区域
+#   │   ├── 大堂及走廊
+#   │   ├── 电梯
+#   │   └── 地下车库
+#   ├── 1F-6F（A公司 租户）
+#   ├── 7F-12F（B公司 租户）
+#   ├── 13F-18F（C公司 租户）
+#   └── 机电设施
+#       ├── 变配电室
+#       ├── 空调机房
+#       └── 消防泵房
+#
+# 网关配置：
+#   GW-BAS（楼宇自控系统网关，西门子 IOT2050，MQTT）
+#   GW-POWER（配电监测网关，映翰通 IR915，MQTT）
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 配电监测 — 网关 GW-POWER
+  # ============================================================
+
+  - name: "大楼总进线电表"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM820-001"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "CZ-E-001"
+        name: "总有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 8967000.0
+        hourly_increment: [100.0, 500.0]
+        pattern: office
+
+      - code: "CZ-E-002"
+        name: "总有功功率"
+        type: instant
+        unit: "kW"
+        range: [80.0, 380.0]
+        pattern: office
+
+      - code: "CZ-E-003"
+        name: "总最大需量"
+        type: instant
+        unit: "kW"
+        range: [350.0, 420.0]
+        pattern: constant
+
+      - code: "CZ-E-004"
+        name: "总功率因数"
+        type: instant
+        unit: ""
+        range: [0.90, 0.98]
+        pattern: constant
+
+  # --- 租户分表 ---
+  - name: "A公司电表(1F-6F)"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM710-101"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "CZ-E-010"
+        name: "A公司有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 2345000.0
+        hourly_increment: [30.0, 150.0]
+        pattern: office
+
+      - code: "CZ-E-011"
+        name: "A公司功率"
+        type: instant
+        unit: "kW"
+        range: [20.0, 110.0]
+        pattern: office
+
+  - name: "B公司电表(7F-12F)"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM710-102"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "CZ-E-020"
+        name: "B公司有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1987000.0
+        hourly_increment: [25.0, 130.0]
+        pattern: office
+
+  - name: "C公司电表(13F-18F)"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM710-103"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "CZ-E-030"
+        name: "C公司有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1567000.0
+        hourly_increment: [20.0, 100.0]
+        pattern: office
+
+  - name: "公共区域电表"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM710-104"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "CZ-E-040"
+        name: "公共区域电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 567000.0
+        hourly_increment: [8.0, 30.0]
+        pattern: office
+
+  - name: "电梯电表"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM710-105"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "CZ-E-045"
+        name: "电梯电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 234000.0
+        hourly_increment: [3.0, 15.0]
+        pattern: office
+
+  - name: "地下车库电表"
+    protocol: mqtt
+    gateway_id: "GW-POWER"
+    device_id: "PM710-106"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "CZ-E-048"
+        name: "车库照明通风电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 123000.0
+        hourly_increment: [2.0, 8.0]
+        pattern: constant
+
+  # ============================================================
+  # 楼宇自控 — 网关 GW-BAS（空调及环境监测）
+  # ============================================================
+
+  - name: "中央空调主机电表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "BAS-METER-001"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "CZ-E-050"
+        name: "空调主机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1890000.0
+        hourly_increment: [30.0, 200.0]
+        pattern: hvac
+
+      - code: "CZ-E-051"
+        name: "空调主机功率"
+        type: instant
+        unit: "kW"
+        range: [20.0, 150.0]
+        pattern: hvac
+
+  - name: "冷冻水系统传感器"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "BAS-SENSOR-001"
+    device_type: "sensor"
+    interval: 30
+    points:
+      - code: "CZ-T-001"
+        name: "冷冻水供水温度"
+        type: instant
+        unit: "℃"
+        range: [6.0, 9.0]
+        pattern: hvac
+
+      - code: "CZ-T-002"
+        name: "冷冻水回水温度"
+        type: instant
+        unit: "℃"
+        range: [11.0, 14.0]
+        pattern: hvac
+
+      - code: "CZ-T-003"
+        name: "室外温度"
+        type: instant
+        unit: "℃"
+        range: [18.0, 38.0]
+        pattern: hvac
+
+      - code: "CZ-H-001"
+        name: "室外湿度"
+        type: instant
+        unit: "%RH"
+        range: [40.0, 85.0]
+        pattern: hvac
+
+  - name: "消防泵房电表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "BAS-METER-002"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "CZ-E-060"
+        name: "消防泵房电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 12340.0
+        hourly_increment: [0.1, 0.5]
+        pattern: constant          # 消防泵平时不运行
+
+  # --- 大楼总水表 ---
+  - name: "大楼总水表"
+    protocol: mqtt
+    gateway_id: "GW-BAS"
+    device_id: "BAS-WATER-001"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "CZ-W-001"
+        name: "大楼总用水量"
+        type: accumulate
+        unit: "m3"
+        base_value: 45670.0
+        hourly_increment: [1.0, 8.0]
+        pattern: office

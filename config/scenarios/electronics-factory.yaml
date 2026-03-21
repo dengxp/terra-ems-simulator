@@ -1,0 +1,319 @@
+# ============================================================
+# 精微电子科技有限公司 — 现代化电子制造工厂
+# ============================================================
+#
+# 行业：电子制造（SMT 贴片 + 组装）
+# 规模：年产值 2 亿，员工 500 人
+# 能源：电力、压缩空气、水、氮气
+# 特点：全网关覆盖，设备新，全部 MQTT 上报，高自动化
+#
+# 用能单元树：
+#   精微电子
+#   ├── SMT 车间
+#   │   ├── 1号产线
+#   │   └── 2号产线
+#   ├── 组装车间
+#   │   ├── 组装产线A
+#   │   └── 测试区
+#   ├── 仓库
+#   ├── 办公区
+#   ├── 无尘室
+#   └── 公用设施
+#       ├── 配电房
+#       ├── 空调机房
+#       ├── 空压站
+#       └── 纯水站
+#
+# 网关配置：
+#   GW-SMT（SMT车间，研华WISE-4051，MQTT）
+#   GW-ASSY（组装车间，研华WISE-4051，MQTT）
+#   GW-FAC（公用设施，映翰通IR915，MQTT）
+#   GW-OFFICE（办公区+仓库，有人USR-G786，MQTT）
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # SMT 车间 — 网关 GW-SMT
+  # ============================================================
+
+  - name: "SMT车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-SMT"
+    device_id: "PM810-001"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "JW-E-001"
+        name: "SMT车间有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 1234560.0
+        hourly_increment: [120.0, 480.0]
+        pattern: industrial
+
+      - code: "JW-E-002"
+        name: "SMT车间有功功率"
+        type: instant
+        unit: "kW"
+        range: [80.0, 350.0]
+        pattern: industrial
+
+      - code: "JW-E-003"
+        name: "SMT车间A相电压"
+        type: instant
+        unit: "V"
+        range: [220.0, 230.0]
+        pattern: constant
+
+      - code: "JW-E-004"
+        name: "SMT车间功率因数"
+        type: instant
+        unit: ""
+        range: [0.88, 0.97]
+        pattern: constant
+
+  - name: "1号贴片机电表"
+    protocol: mqtt
+    gateway_id: "GW-SMT"
+    device_id: "PM710-001"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "JW-E-010"
+        name: "1号贴片机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 345670.0
+        hourly_increment: [20.0, 65.0]
+        pattern: industrial
+
+      - code: "JW-E-011"
+        name: "1号贴片机功率"
+        type: instant
+        unit: "kW"
+        range: [5.0, 45.0]
+        pattern: industrial
+
+  - name: "2号贴片机电表"
+    protocol: mqtt
+    gateway_id: "GW-SMT"
+    device_id: "PM710-002"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "JW-E-012"
+        name: "2号贴片机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 298450.0
+        hourly_increment: [18.0, 60.0]
+        pattern: industrial
+
+  - name: "回流焊炉电表"
+    protocol: mqtt
+    gateway_id: "GW-SMT"
+    device_id: "PM710-003"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "JW-E-014"
+        name: "回流焊炉电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 567890.0
+        hourly_increment: [40.0, 120.0]
+        pattern: industrial
+
+      - code: "JW-E-015"
+        name: "回流焊炉功率"
+        type: instant
+        unit: "kW"
+        range: [30.0, 85.0]
+        pattern: industrial
+
+  # ============================================================
+  # 组装车间 — 网关 GW-ASSY
+  # ============================================================
+
+  - name: "组装车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-ASSY"
+    device_id: "PM810-002"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "JW-E-020"
+        name: "组装车间有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 456780.0
+        hourly_increment: [30.0, 150.0]
+        pattern: industrial
+
+      - code: "JW-E-021"
+        name: "组装车间功率"
+        type: instant
+        unit: "kW"
+        range: [20.0, 100.0]
+        pattern: industrial
+
+  - name: "自动化测试设备电表"
+    protocol: mqtt
+    gateway_id: "GW-ASSY"
+    device_id: "PM710-004"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "JW-E-025"
+        name: "测试设备电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 78900.0
+        hourly_increment: [5.0, 25.0]
+        pattern: industrial
+
+  # ============================================================
+  # 公用设施 — 网关 GW-FAC
+  # ============================================================
+
+  - name: "全厂总进线电表"
+    protocol: mqtt
+    gateway_id: "GW-FAC"
+    device_id: "PM810-003"
+    device_type: "meter"
+    interval: 10
+    points:
+      - code: "JW-E-050"
+        name: "全厂总有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 5678900.0
+        hourly_increment: [300.0, 1200.0]
+        pattern: industrial
+
+      - code: "JW-E-051"
+        name: "全厂总功率"
+        type: instant
+        unit: "kW"
+        range: [200.0, 800.0]
+        pattern: industrial
+
+      - code: "JW-E-052"
+        name: "全厂最大需量"
+        type: instant
+        unit: "kW"
+        range: [600.0, 850.0]
+        pattern: constant
+
+  - name: "中央空调主机电表"
+    protocol: mqtt
+    gateway_id: "GW-FAC"
+    device_id: "PM710-010"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "JW-E-055"
+        name: "空调主机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 890120.0
+        hourly_increment: [40.0, 200.0]
+        pattern: hvac
+
+      - code: "JW-E-056"
+        name: "空调主机功率"
+        type: instant
+        unit: "kW"
+        range: [30.0, 150.0]
+        pattern: hvac
+
+  - name: "空压机电表"
+    protocol: mqtt
+    gateway_id: "GW-FAC"
+    device_id: "PM710-011"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "JW-E-058"
+        name: "空压机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 345670.0
+        hourly_increment: [20.0, 75.0]
+        pattern: industrial
+
+  - name: "纯水系统电表"
+    protocol: mqtt
+    gateway_id: "GW-FAC"
+    device_id: "PM710-012"
+    device_type: "meter"
+    interval: 30
+    points:
+      - code: "JW-E-060"
+        name: "纯水系统电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 67890.0
+        hourly_increment: [5.0, 15.0]
+        pattern: constant
+
+  - name: "全厂总水表"
+    protocol: mqtt
+    gateway_id: "GW-FAC"
+    device_id: "WATER-010"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "JW-W-001"
+        name: "全厂总用水量"
+        type: accumulate
+        unit: "m3"
+        base_value: 89560.0
+        hourly_increment: [2.0, 15.0]
+        pattern: industrial
+
+  # ============================================================
+  # 办公区 — 网关 GW-OFFICE
+  # ============================================================
+
+  - name: "办公区总电表"
+    protocol: mqtt
+    gateway_id: "GW-OFFICE"
+    device_id: "PM710-020"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "JW-E-070"
+        name: "办公区电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 123450.0
+        hourly_increment: [5.0, 30.0]
+        pattern: office
+
+      - code: "JW-E-071"
+        name: "办公区功率"
+        type: instant
+        unit: "kW"
+        range: [3.0, 22.0]
+        pattern: office
+
+  - name: "仓库电表"
+    protocol: mqtt
+    gateway_id: "GW-OFFICE"
+    device_id: "PM710-021"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "JW-E-075"
+        name: "仓库电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 34560.0
+        hourly_increment: [1.0, 5.0]
+        pattern: constant

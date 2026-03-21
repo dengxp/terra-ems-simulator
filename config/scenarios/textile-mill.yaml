@@ -1,0 +1,295 @@
+# ============================================================
+# 永兴纺织有限公司 — 传统纺织厂（设备老旧）
+# ============================================================
+#
+# 行业：纺织
+# 规模：年产值 8000 万，员工 200 人
+# 能源：电力、蒸汽、水
+# 特点：设备老旧，无网关，全部串口服务器直连，Modbus TCP 轮询
+#       部分老旧电表使用 DL/T645 协议
+#       无自动化系统，依赖手工配置
+#
+# 用能单元树：
+#   永兴纺织
+#   ├── 纺纱车间
+#   ├── 织造车间
+#   ├── 染整车间
+#   ├── 锅炉房
+#   ├── 空压站
+#   └── 办公生活区
+#
+# 接入方式：
+#   全部通过串口服务器（有人 USR-TCP232）转 Modbus TCP
+#   无 MQTT 网关，Collector 直接轮询所有仪表
+#   3 台老式国产电表仍使用 DL/T645 协议（暂用 Modbus 模拟）
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 配电房总表 — 串口服务器 192.168.1.100:502
+  # 老旧正泰电表，Modbus RTU over TCP
+  # ============================================================
+
+  - name: "全厂总进线电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5030
+    slave_id: 1
+    interval: 15
+    registers:
+      - point_code: "YX-E-001"
+        name: "全厂总有功电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 12560000.0
+        hourly_increment: [200.0, 800.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "YX-E-002"
+        name: "全厂总功率"
+        address: 2
+        data_type: float32
+        range: [150.0, 600.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "YX-E-003"
+        name: "A相电压"
+        address: 4
+        data_type: float32
+        range: [215.0, 230.0]
+        pattern: constant
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  # ============================================================
+  # 纺纱车间 — 串口服务器 192.168.1.101:502
+  # ============================================================
+
+  - name: "纺纱车间总电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5031
+    slave_id: 1
+    interval: 15
+    registers:
+      - point_code: "YX-E-010"
+        name: "纺纱车间电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 3450000.0
+        hourly_increment: [60.0, 250.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "YX-E-011"
+        name: "纺纱车间功率"
+        address: 2
+        data_type: float32
+        range: [40.0, 180.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  - name: "细纱机电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5031
+    slave_id: 2
+    interval: 30
+    registers:
+      - point_code: "YX-E-012"
+        name: "细纱机电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 1230000.0
+        hourly_increment: [25.0, 110.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "粗纱机电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5031
+    slave_id: 3
+    interval: 30
+    registers:
+      - point_code: "YX-E-013"
+        name: "粗纱机电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 890000.0
+        hourly_increment: [20.0, 85.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  # ============================================================
+  # 织造车间 — 串口服务器 192.168.1.102:502
+  # ============================================================
+
+  - name: "织造车间总电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5032
+    slave_id: 1
+    interval: 15
+    registers:
+      - point_code: "YX-E-020"
+        name: "织造车间电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 4560000.0
+        hourly_increment: [80.0, 350.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "YX-E-021"
+        name: "织造车间功率"
+        address: 2
+        data_type: float32
+        range: [60.0, 250.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  # ============================================================
+  # 染整车间 — 串口服务器 192.168.1.103:502
+  # 高能耗车间：大量蒸汽和热水
+  # ============================================================
+
+  - name: "染整车间总电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5033
+    slave_id: 1
+    interval: 15
+    registers:
+      - point_code: "YX-E-030"
+        name: "染整车间电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 2340000.0
+        hourly_increment: [40.0, 180.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "染整车间水表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5033
+    slave_id: 2
+    interval: 60
+    registers:
+      - point_code: "YX-W-001"
+        name: "染整用水量"
+        address: 0
+        data_type: uint32
+        type: accumulate
+        base_value: 3456000
+        hourly_increment: [500, 3000]
+        pattern: industrial
+        scale: 0.01
+        offset: 0.0
+
+  - name: "染整车间蒸汽表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5033
+    slave_id: 3
+    interval: 60
+    registers:
+      - point_code: "YX-S-001"
+        name: "染整蒸汽用量"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 156000.0
+        hourly_increment: [5.0, 30.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  # ============================================================
+  # 锅炉房 + 空压站 — 串口服务器 192.168.1.104:502
+  # ============================================================
+
+  - name: "锅炉天然气表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5034
+    slave_id: 1
+    interval: 60
+    registers:
+      - point_code: "YX-G-001"
+        name: "锅炉天然气用量"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 234560.0
+        hourly_increment: [10.0, 60.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  - name: "空压站电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5034
+    slave_id: 2
+    interval: 30
+    registers:
+      - point_code: "YX-E-040"
+        name: "空压站电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 1890000.0
+        hourly_increment: [30.0, 120.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+  # ============================================================
+  # 全厂总水表 — 串口服务器 192.168.1.105:502
+  # ============================================================
+
+  - name: "全厂总水表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5035
+    slave_id: 1
+    interval: 60
+    registers:
+      - point_code: "YX-W-010"
+        name: "全厂总用水量"
+        address: 0
+        data_type: uint32
+        type: accumulate
+        base_value: 8900000
+        hourly_increment: [800, 5000]
+        pattern: industrial
+        scale: 0.01
+        offset: 0.0

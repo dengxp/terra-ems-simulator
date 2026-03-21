@@ -1,0 +1,499 @@
+# ============================================================
+# 华味食品有限公司 — 中小型食品加工企业
+# ============================================================
+#
+# 行业：食品加工
+# 规模：年产值 5000 万，员工 120 人
+# 能源：电力、天然气、水
+# 特点：混合部署，生产车间用现代网关，配电房用老旧串口服务器
+#
+# 用能单元树：
+#   华味食品
+#   ├── 生产车间
+#   │   ├── 配料工段
+#   │   ├── 烘焙工段
+#   │   └── 包装工段
+#   ├── 冷库
+#   ├── 办公楼
+#   ├── 食堂
+#   └── 公用设施
+#       ├── 配电房
+#       ├── 锅炉房
+#       └── 空压站
+#
+# 网关/通道配置：
+#   GW-001（生产车间，映翰通IR915，MQTT上报）
+#     ├── RS485-1：Modbus RTU → 3块安科瑞电表
+#     └── RS485-2：Modbus RTU → 1块水表 + 1块气表
+#   GW-002（冷库，有人USR-G786，MQTT上报）
+#     └── RS485-1：Modbus RTU → 2块电表 + 2个温度传感器
+#   配电房：无网关，串口服务器直连，Collector Modbus TCP 轮询
+#   办公楼：无网关，物业系统通过 HTTP 推送
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+
+devices:
+  # ============================================================
+  # 生产车间 — 网关 GW-001（映翰通 IR915，MQTT 上报）
+  # ============================================================
+
+  # --- 车间总电表（安科瑞 ACR220EL 多功能电力仪表）---
+  - name: "生产车间总电表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "ACR220EL-001"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "HW-E-001"
+        name: "正向有功总电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 856230.0
+        hourly_increment: [80.0, 350.0]
+        pattern: industrial
+
+      - code: "HW-E-002"
+        name: "A相电压"
+        type: instant
+        unit: "V"
+        range: [218.0, 228.0]
+        pattern: constant
+
+      - code: "HW-E-003"
+        name: "B相电压"
+        type: instant
+        unit: "V"
+        range: [219.0, 227.0]
+        pattern: constant
+
+      - code: "HW-E-004"
+        name: "C相电压"
+        type: instant
+        unit: "V"
+        range: [217.0, 226.0]
+        pattern: constant
+
+      - code: "HW-E-005"
+        name: "A相电流"
+        type: instant
+        unit: "A"
+        range: [80.0, 320.0]
+        pattern: industrial
+
+      - code: "HW-E-006"
+        name: "总有功功率"
+        type: instant
+        unit: "kW"
+        range: [50.0, 230.0]
+        pattern: industrial
+
+      - code: "HW-E-007"
+        name: "功率因数"
+        type: instant
+        unit: ""
+        range: [0.82, 0.95]
+        pattern: constant
+
+  # --- 搅拌机电表（安科瑞 ACR120EL）---
+  - name: "搅拌机电表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "ACR120EL-001"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "HW-E-010"
+        name: "搅拌机有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 125680.0
+        hourly_increment: [15.0, 55.0]
+        pattern: industrial
+
+      - code: "HW-E-011"
+        name: "搅拌机功率"
+        type: instant
+        unit: "kW"
+        range: [0.0, 37.0]
+        pattern: industrial
+
+  # --- 1号烤箱电表（安科瑞 ACR120EL）---
+  - name: "1号烤箱电表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "ACR120EL-002"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "HW-E-020"
+        name: "1号烤箱有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 234560.0
+        hourly_increment: [25.0, 80.0]
+        pattern: industrial
+
+      - code: "HW-E-021"
+        name: "1号烤箱功率"
+        type: instant
+        unit: "kW"
+        range: [0.0, 55.0]
+        pattern: industrial
+
+  # --- 2号烤箱电表 ---
+  - name: "2号烤箱电表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "ACR120EL-003"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "HW-E-022"
+        name: "2号烤箱有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 198320.0
+        hourly_increment: [20.0, 75.0]
+        pattern: industrial
+
+      - code: "HW-E-023"
+        name: "2号烤箱功率"
+        type: instant
+        unit: "kW"
+        range: [0.0, 55.0]
+        pattern: industrial
+
+  # --- 包装线电表 ---
+  - name: "包装线电表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "ACR120EL-004"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "HW-E-030"
+        name: "包装线有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 67890.0
+        hourly_increment: [8.0, 25.0]
+        pattern: industrial
+
+      - code: "HW-E-031"
+        name: "包装线功率"
+        type: instant
+        unit: "kW"
+        range: [0.0, 18.0]
+        pattern: industrial
+
+  # --- 车间水表（脉冲远传水表）---
+  - name: "生产车间水表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "WATER-001"
+    device_type: "water"
+    interval: 60
+    points:
+      - code: "HW-W-001"
+        name: "车间用水量"
+        type: accumulate
+        unit: "m3"
+        base_value: 23456.0
+        hourly_increment: [0.8, 5.0]
+        pattern: industrial
+
+  # --- 天然气表（烘焙工段用气）---
+  - name: "烘焙工段天然气表"
+    protocol: mqtt
+    gateway_id: "GW-001"
+    device_id: "GAS-001"
+    device_type: "gas"
+    interval: 60
+    points:
+      - code: "HW-G-001"
+        name: "天然气用量"
+        type: accumulate
+        unit: "m3"
+        base_value: 45678.0
+        hourly_increment: [2.0, 12.0]
+        pattern: industrial
+
+  # ============================================================
+  # 冷库 — 网关 GW-002（有人 USR-G786，MQTT 上报，4G 联网）
+  # ============================================================
+
+  # --- 冷库总电表 ---
+  - name: "冷库总电表"
+    protocol: mqtt
+    gateway_id: "GW-002"
+    device_id: "ACR220EL-002"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "HW-E-040"
+        name: "冷库总有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 567890.0
+        hourly_increment: [30.0, 80.0]
+        pattern: constant          # 冷库 24 小时运行，相对恒定
+
+      - code: "HW-E-041"
+        name: "冷库总功率"
+        type: instant
+        unit: "kW"
+        range: [25.0, 65.0]
+        pattern: constant
+
+  # --- 1号压缩机电表 ---
+  - name: "1号冷冻压缩机电表"
+    protocol: mqtt
+    gateway_id: "GW-002"
+    device_id: "ACR120EL-005"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "HW-E-042"
+        name: "1号压缩机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 312450.0
+        hourly_increment: [15.0, 45.0]
+        pattern: hvac              # 跟随温度负荷
+
+      - code: "HW-E-043"
+        name: "1号压缩机功率"
+        type: instant
+        unit: "kW"
+        range: [0.0, 37.0]
+        pattern: hvac
+
+  # --- 2号压缩机电表 ---
+  - name: "2号冷冻压缩机电表"
+    protocol: mqtt
+    gateway_id: "GW-002"
+    device_id: "ACR120EL-006"
+    device_type: "meter"
+    interval: 15
+    points:
+      - code: "HW-E-044"
+        name: "2号压缩机电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 289670.0
+        hourly_increment: [15.0, 45.0]
+        pattern: hvac
+
+  # --- 冷库温度传感器 ---
+  - name: "冷库温度传感器"
+    protocol: mqtt
+    gateway_id: "GW-002"
+    device_id: "TEMP-001"
+    device_type: "sensor"
+    interval: 30
+    points:
+      - code: "HW-T-001"
+        name: "冷冻库温度"
+        type: instant
+        unit: "℃"
+        range: [-22.0, -16.0]
+        pattern: constant
+
+      - code: "HW-T-002"
+        name: "冷藏库温度"
+        type: instant
+        unit: "℃"
+        range: [0.0, 5.0]
+        pattern: constant
+
+  # ============================================================
+  # 配电房 — 无网关，串口服务器（有人 USR-TCP232）直连
+  #         Collector 通过 Modbus TCP 轮询
+  # ============================================================
+
+  # --- 10kV 高压进线柜多功能表（正泰 PD194E-9S4）---
+  - name: "高压进线总表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5020
+    slave_id: 1
+    interval: 15
+    registers:
+      - point_code: "HW-E-050"
+        name: "全厂总有功电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 3500000.0
+        hourly_increment: [150.0, 600.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "HW-E-051"
+        name: "全厂总有功功率"
+        address: 2
+        data_type: float32
+        range: [100.0, 450.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "HW-E-052"
+        name: "A相电压"
+        address: 4
+        data_type: float32
+        range: [218.0, 228.0]
+        pattern: constant
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "HW-E-053"
+        name: "功率因数"
+        address: 6
+        data_type: float32
+        range: [0.85, 0.96]
+        pattern: constant
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  # ============================================================
+  # 公用设施 — 无网关，不同协议混合
+  # ============================================================
+
+  # --- 空压站电表（老旧威胜电表，Modbus TCP，注意字节序不同）---
+  - name: "空压站电表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5021
+    slave_id: 1
+    interval: 30
+    registers:
+      - point_code: "HW-E-060"
+        name: "空压机有功电能"
+        address: 0
+        data_type: float32
+        type: accumulate
+        base_value: 189000.0
+        hourly_increment: [10.0, 45.0]
+        pattern: industrial
+        scale: 1.0
+        offset: 0.0
+
+      - point_code: "HW-E-061"
+        name: "空压机功率"
+        address: 2
+        data_type: float32
+        range: [0.0, 30.0]
+        pattern: industrial
+        type: instant
+        scale: 1.0
+        offset: 0.0
+
+  # --- 全厂总水表（Modbus TCP）---
+  - name: "全厂总水表"
+    protocol: modbus_tcp
+    host: "0.0.0.0"
+    port: 5022
+    slave_id: 1
+    interval: 60
+    registers:
+      - point_code: "HW-W-010"
+        name: "全厂总用水量"
+        address: 0
+        data_type: uint32
+        type: accumulate
+        base_value: 567800
+        hourly_increment: [100, 500]
+        pattern: industrial
+        scale: 0.01
+        offset: 0.0
+
+  # ============================================================
+  # 办公楼 — 无网关，无计量器具在我们系统中
+  #         物业系统通过 HTTP API 推送（此处用 MQTT 模拟）
+  # ============================================================
+
+  - name: "办公楼总电表"
+    protocol: mqtt
+    gateway_id: "GW-BMS"
+    device_id: "BMS-METER-001"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "HW-E-070"
+        name: "办公楼有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 98760.0
+        hourly_increment: [5.0, 25.0]
+        pattern: office
+
+      - code: "HW-E-071"
+        name: "办公楼功率"
+        type: instant
+        unit: "kW"
+        range: [3.0, 18.0]
+        pattern: office
+
+  - name: "中央空调电表"
+    protocol: mqtt
+    gateway_id: "GW-BMS"
+    device_id: "BMS-METER-002"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "HW-E-072"
+        name: "空调有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 156780.0
+        hourly_increment: [8.0, 40.0]
+        pattern: hvac
+
+      - code: "HW-E-073"
+        name: "空调功率"
+        type: instant
+        unit: "kW"
+        range: [5.0, 30.0]
+        pattern: hvac
+
+  # --- 食堂电表 ---
+  - name: "食堂电表"
+    protocol: mqtt
+    gateway_id: "GW-BMS"
+    device_id: "BMS-METER-003"
+    device_type: "meter"
+    interval: 60
+    points:
+      - code: "HW-E-080"
+        name: "食堂有功电能"
+        type: accumulate
+        unit: "kWh"
+        base_value: 34560.0
+        hourly_increment: [3.0, 15.0]
+        pattern: industrial        # 早中晚三个高峰
+
+  # --- 食堂天然气表 ---
+  - name: "食堂天然气表"
+    protocol: mqtt
+    gateway_id: "GW-BMS"
+    device_id: "BMS-GAS-001"
+    device_type: "gas"
+    interval: 60
+    points:
+      - code: "HW-G-010"
+        name: "食堂天然气用量"
+        type: accumulate
+        unit: "m3"
+        base_value: 12340.0
+        hourly_increment: [0.5, 5.0]
+        pattern: industrial
