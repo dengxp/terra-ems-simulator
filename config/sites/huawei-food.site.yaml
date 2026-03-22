@@ -441,6 +441,34 @@ energy_units:
                 sim_range: [25.0, 65.0]
                 sim_pattern: constant
 
+          # 冷库温度传感器（不属于特定设备）
+          - code: MTR-TEMP-001
+            name: 冷库温度传感器
+            type: 温湿度传感器
+            model_number: 海康 DS-1
+            manufacturer: 海康威视
+            location: 冷库内部
+            gateway: GW-002
+            data_source: 冷库RS485-1
+            points:
+              - code: HW-T-001
+                name: 冷冻库温度
+                type: COLLECT
+                category: OPERATION
+                unit: "℃"
+                sim_type: instant
+                sim_range: [-22.0, -16.0]
+                sim_pattern: constant
+
+              - code: HW-T-002
+                name: 冷藏库温度
+                type: COLLECT
+                category: OPERATION
+                unit: "℃"
+                sim_type: instant
+                sim_range: [0.0, 5.0]
+                sim_pattern: constant
+
         equipments:
           - code: EQ-COMP-01
             name: 1号冷冻压缩机
@@ -510,34 +538,7 @@ energy_units:
                     sim_hourly_increment: [15.0, 45.0]
                     sim_pattern: hvac
 
-        # 冷库温度传感器（不属于特定设备，作为计量器具管理）
-          - code: MTR-TEMP-001
-            name: 冷库温度传感器
-            type: 温湿度传感器
-            energy_type: ELECTRIC
-            model_number: 海康 DS-1
-            manufacturer: 海康威视
-            location: 冷库内部
-            gateway: GW-002
-            data_source: 冷库RS485-1
-            points:
-              - code: HW-T-001
-                name: 冷冻库温度
-                type: COLLECT
-                category: OPERATION
-                unit: "℃"
-                energy_type: ELECTRIC
-                sim_type: instant
-                sim_range: [-22.0, -16.0]
-                sim_pattern: constant
-
-              - code: HW-T-002
-                name: 冷藏库温度
-                type: COLLECT
-                category: OPERATION
-                unit: "℃"
-                energy_type: ELECTRIC
-                sim_type: instant
+        # (温度传感器已移至上方 meters 列表中)
                 sim_range: [0.0, 5.0]
                 sim_pattern: constant
 
