@@ -46,10 +46,11 @@ def main():
     print(f"已加载配置：{config_path}")
     print(f"设备数量：{len(config['devices'])}")
 
-    # 连接 MQTT Broker
+    # 连接 MQTT Broker（环境变量优先于配置文件）
+    import os
     mqtt_config = config.get("mqtt", {})
-    broker = mqtt_config.get("broker", "localhost")
-    port = mqtt_config.get("port", 1883)
+    broker = os.environ.get("MQTT_HOST") or mqtt_config.get("broker", "localhost")
+    port = int(os.environ.get("MQTT_PORT", 0)) or mqtt_config.get("port", 1883)
 
     client = mqtt.Client(
         callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
