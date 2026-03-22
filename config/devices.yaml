@@ -260,7 +260,7 @@ devices:
     - 45.0
     pattern: hvac
 - name: 高压进线总表
-  protocol: mqtt
+  protocol: modbus_tcp
   gateway_id: GW-PDR
   device_id: MTR-PD194-001
   device_type: meter
@@ -296,7 +296,7 @@ devices:
     - 0.96
     pattern: constant
 - name: 空压机电表
-  protocol: mqtt
+  protocol: modbus_tcp
   gateway_id: GW-KY
   device_id: MTR-ACR120-007
   device_type: meter
@@ -318,7 +318,7 @@ devices:
     - 30.0
     pattern: industrial
 - name: 全厂总水表
-  protocol: mqtt
+  protocol: modbus_tcp
   gateway_id: GW-SS
   device_id: MTR-WATER-010
   device_type: meter
