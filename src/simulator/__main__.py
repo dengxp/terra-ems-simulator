@@ -11,6 +11,8 @@ Terra EMS 设备模拟器入口
 
 import argparse
 import json
+import logging
+import os
 import signal
 import sys
 import threading
@@ -23,8 +25,33 @@ import yaml
 
 from simulator.patterns import generate_increment, generate_value
 
+log = logging.getLogger("simulator")
+
+
+def _init_logging():
+    """初始化日志：控制台 + 文件（如果配置了 LOG_DIR 环境变量）"""
+    fmt = logging.Formatter("%(asctime)s %(levelname)-5s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+
+    console = logging.StreamHandler()
+    console.setFormatter(fmt)
+    log.addHandler(console)
+    log.setLevel(logging.INFO)
+
+    log_dir = os.environ.get("LOG_DIR", "")
+    if log_dir:
+        os.makedirs(log_dir, exist_ok=True)
+        from logging.handlers import TimedRotatingFileHandler
+        fh = TimedRotatingFileHandler(
+            os.path.join(log_dir, "simulator.log"),
+            when="midnight", backupCount=30, encoding="utf-8",
+        )
+        fh.setFormatter(fmt)
+        log.addHandler(fh)
+
 
 def main():
+    _init_logging()
+
     parser = argparse.ArgumentParser(description="Terra EMS 设备模拟器")
     parser.add_argument(
         "--config",
@@ -37,14 +64,14 @@ def main():
     # 加载配置
     config_path = Path(args.config)
     if not config_path.exists():
-        print(f"错误：配置文件 {config_path} 不存在")
+        log.error(f"配置文件 {config_path} 不存在")
         sys.exit(1)
 
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
-    print(f"已加载配置：{config_path}")
-    print(f"设备数量：{len(config['devices'])}")
+    log.info(f"已加载配置：{config_path}")
+    log.info(f"设备数量：{len(config['devices'])}")
 
     # 连接 MQTT Broker（环境变量优先于配置文件）
     import os
@@ -63,10 +90,10 @@ def main():
         client.username_pw_set(username, password)
 
     def on_connect(client, userdata, flags, reason_code, properties=None):
-        print(f"已连接 MQTT Broker: {broker}:{port} (rc={reason_code})")
+        log.info(f"已连接 MQTT Broker: {broker}:{port} (rc={reason_code})")
 
     def on_disconnect(client, userdata, flags, reason_code, properties=None):
-        print(f"MQTT 连接断开 (rc={reason_code})，等待重连...")
+        log.warning(f"MQTT 连接断开 (rc={reason_code})，等待重连...")
 
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
@@ -74,7 +101,7 @@ def main():
     try:
         client.connect(broker, port, keepalive=60)
     except Exception as e:
-        print(f"错误：无法连接 MQTT Broker {broker}:{port} - {e}")
+        log.error(f"无法连接 MQTT Broker {broker}:{port} - {e}")
         sys.exit(1)
 
     client.loop_start()
@@ -83,7 +110,7 @@ def main():
     stop_event = threading.Event()
 
     def signal_handler(sig, frame):
-        print("\n收到退出信号，正在停止...")
+        log.info("收到退出信号，正在停止...")
         stop_event.set()
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -112,8 +139,8 @@ def main():
         )
         t.start()
         threads.append(t)
-        print(
-            f"  启动设备: {device['name']} "
+        log.info(
+            f"启动设备: {device['name']} "
             f"(网关={device['gateway_id']}, "
             f"设备={device['device_id']}, "
             f"间隔={device['interval']}s, "
@@ -126,18 +153,17 @@ def main():
             from simulator.modbus_sim import start_modbus_simulator
             start_modbus_simulator(modbus_devices, stop_event)
         except ImportError:
-            print("警告：pymodbus 未安装，跳过 Modbus 模拟。安装方式：pip install pymodbus")
+            log.warning("pymodbus 未安装，跳过 Modbus 模拟。安装方式：pip install pymodbus")
 
     total = len(mqtt_devices) + len(modbus_devices)
-    print(f"\n模拟器已启动，{total} 个设备正在运行（MQTT: {len(mqtt_devices)}, Modbus: {len(modbus_devices)}）...")
-    print("按 Ctrl+C 停止\n")
+    log.info(f"模拟器已启动，{total} 个设备正在运行（MQTT: {len(mqtt_devices)}, Modbus: {len(modbus_devices)}）")
 
     # 等待退出信号
     stop_event.wait()
 
     client.loop_stop()
     client.disconnect()
-    print("模拟器已停止")
+    log.info("模拟器已停止")
 
 
 def _device_loop(
@@ -196,7 +222,7 @@ def _device_loop(
         point_summary = ", ".join(
             f"{p['code']}={p['value']}" for p in points
         )
-        print(f"[{now.strftime('%H:%M:%S')}] {device['name']}: {point_summary}")
+        log.info(f"{device['name']}: {point_summary}")
 
         stop_event.wait(timeout=interval)
 
