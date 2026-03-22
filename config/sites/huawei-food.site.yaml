@@ -106,7 +106,7 @@ energy_units:
                 sim_pattern: industrial
 
               - code: HW-E-002
-                name: A相电压
+                name: 车间总表A相电压
                 type: COLLECT
                 category: OPERATION
                 unit: V
@@ -156,7 +156,7 @@ energy_units:
                 sim_pattern: industrial
 
               - code: HW-E-007
-                name: 功率因数
+                name: 车间总表功率因数
                 type: COLLECT
                 category: OPERATION
                 unit: ""
@@ -610,7 +610,7 @@ energy_units:
                 sim_pattern: industrial
 
               - code: HW-E-052
-                name: A相电压
+                name: 高压进线A相电压
                 type: COLLECT
                 category: OPERATION
                 unit: V
@@ -627,7 +627,7 @@ energy_units:
                 sim_pattern: constant
 
               - code: HW-E-053
-                name: 功率因数
+                name: 高压进线功率因数
                 type: COLLECT
                 category: OPERATION
                 unit: ""
