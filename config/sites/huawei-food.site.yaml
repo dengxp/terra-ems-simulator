@@ -95,7 +95,7 @@ energy_units:
             data_source: 生产车间RS485-1
             points:
               - code: HW-E-001
-                name: 正向有功总电能
+                name: 车间总表正向有功电能
                 type: COLLECT
                 category: ENERGY
                 unit: kWh
@@ -116,7 +116,7 @@ energy_units:
                 sim_pattern: constant
 
               - code: HW-E-003
-                name: B相电压
+                name: 车间总表B相电压
                 type: COLLECT
                 category: OPERATION
                 unit: V
@@ -126,7 +126,7 @@ energy_units:
                 sim_pattern: constant
 
               - code: HW-E-004
-                name: C相电压
+                name: 车间总表C相电压
                 type: COLLECT
                 category: OPERATION
                 unit: V
@@ -136,7 +136,7 @@ energy_units:
                 sim_pattern: constant
 
               - code: HW-E-005
-                name: A相电流
+                name: 车间总表A相电流
                 type: COLLECT
                 category: OPERATION
                 unit: A
@@ -146,7 +146,7 @@ energy_units:
                 sim_pattern: industrial
 
               - code: HW-E-006
-                name: 总有功功率
+                name: 车间总表有功功率
                 type: COLLECT
                 category: ENERGY
                 unit: kW
