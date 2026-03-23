@@ -15,7 +15,7 @@ from datetime import datetime
 
 from pymodbus.datastore import (
     ModbusSequentialDataBlock,
-    ModbusSlaveContext,
+    ModbusDeviceContext,
     ModbusServerContext,
 )
 from pymodbus.server import StartTcpServer
@@ -55,13 +55,13 @@ def start_modbus_simulator(
         block_size = max(max_addr + 10, 100)
         hr_block = ModbusSequentialDataBlock(0, [0] * block_size)
 
-        store = ModbusSlaveContext(
+        store = ModbusDeviceContext(
             di=ModbusSequentialDataBlock(0, [0] * 10),
             co=ModbusSequentialDataBlock(0, [0] * 10),
             hr=hr_block,
             ir=ModbusSequentialDataBlock(0, [0] * 10),
         )
-        context = ModbusServerContext(slaves={slave_id: store}, single=False)
+        context = ModbusServerContext(devices={slave_id: store}, single=False)
 
         # 初始化寄存器值
         _update_registers(store, registers, init=True)
@@ -82,8 +82,10 @@ def start_modbus_simulator(
         )
         server_thread.start()
 
-        print(
-            f"  启动 Modbus 从站: {device['name']} "
+        import logging
+        log = logging.getLogger("simulator")
+        log.info(
+            f"启动 Modbus 从站: {device['name']} "
             f"(地址={host}:{port}, "
             f"从站={slave_id}, "
             f"寄存器数={len(registers)})"
@@ -95,11 +97,12 @@ def _run_server(context, host: str, port: int, name: str) -> None:
     try:
         StartTcpServer(context=context, address=(host, port))
     except Exception as e:
-        print(f"Modbus Server [{name}] 启动失败: {e}")
+        import logging
+        logging.getLogger("simulator").error(f"Modbus Server [{name}] 启动失败: {e}")
 
 
 def _register_update_loop(
-    store: ModbusSlaveContext,
+    store: ModbusDeviceContext,
     registers: list[dict],
     device: dict,
     stop_event: threading.Event,
@@ -131,13 +134,14 @@ def _register_update_loop(
             actual = val * scale + offset
             values.append(f"{reg['point_code']}={actual:.2f}")
 
-        print(f"[{now.strftime('%H:%M:%S')}] {name}(Modbus): {', '.join(values)}")
+        import logging
+        logging.getLogger("simulator").info(f"{name}(Modbus): {', '.join(values)}")
 
         stop_event.wait(timeout=interval)
 
 
 def _update_registers(
-    store: ModbusSlaveContext,
+    store: ModbusDeviceContext,
     registers: list[dict],
     init: bool = False,
     accum_state: dict[str, float] | None = None,

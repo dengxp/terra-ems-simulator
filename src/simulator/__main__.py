@@ -152,8 +152,10 @@ def main():
         try:
             from simulator.modbus_sim import start_modbus_simulator
             start_modbus_simulator(modbus_devices, stop_event)
-        except ImportError:
-            log.warning("pymodbus 未安装，跳过 Modbus 模拟。安装方式：pip install pymodbus")
+        except ImportError as e:
+            log.warning(f"Modbus 模拟依赖缺失，跳过: {e}")
+        except Exception as e:
+            log.error(f"Modbus 模拟器启动失败: {e}", exc_info=True)
 
     total = len(mqtt_devices) + len(modbus_devices)
     log.info(f"模拟器已启动，{total} 个设备正在运行（MQTT: {len(mqtt_devices)}, Modbus: {len(modbus_devices)}）")

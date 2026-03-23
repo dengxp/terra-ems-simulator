@@ -259,79 +259,105 @@ devices:
     - 15.0
     - 45.0
     pattern: hvac
+# ============================================================
+# Modbus TCP 设备（模拟器启动 Modbus 从站，Collector 主动轮询）
+# ============================================================
 - name: 高压进线总表
   protocol: modbus_tcp
   gateway_id: GW-PDR
   device_id: MTR-PD194-001
   device_type: meter
+  host: "0.0.0.0"
+  port: 5020
+  slave_id: 1
   interval: 15
-  points:
-  - code: HW-E-050
-    name: 全厂总有功电能
-    type: accumulate
-    base_value: 3500000.0
-    hourly_increment:
-    - 150.0
-    - 600.0
-    pattern: industrial
-  - code: HW-E-051
-    name: 全厂总有功功率
-    type: instant
-    range:
-    - 100.0
-    - 450.0
-    pattern: industrial
-  - code: HW-E-052
-    name: 高压进线A相电压
-    type: instant
-    range:
-    - 218.0
-    - 228.0
-    pattern: constant
-  - code: HW-E-053
-    name: 高压进线功率因数
-    type: instant
-    range:
-    - 0.85
-    - 0.96
-    pattern: constant
+  registers:
+    - point_code: HW-E-050
+      name: 全厂总有功电能
+      address: 0
+      data_type: float32
+      scale: 1.0
+      offset: 0.0
+      type: accumulate
+      base_value: 3500000.0
+      hourly_increment: [150.0, 600.0]
+      pattern: industrial
+    - point_code: HW-E-051
+      name: 全厂总有功功率
+      address: 2
+      data_type: float32
+      scale: 1.0
+      offset: 0.0
+      type: instant
+      range: [100.0, 450.0]
+      pattern: industrial
+    - point_code: HW-E-052
+      name: 高压进线A相电压
+      address: 4
+      data_type: float32
+      scale: 1.0
+      offset: 0.0
+      type: instant
+      range: [218.0, 228.0]
+      pattern: constant
+    - point_code: HW-E-053
+      name: 高压进线功率因数
+      address: 6
+      data_type: float32
+      scale: 1.0
+      offset: 0.0
+      type: instant
+      range: [0.85, 0.96]
+      pattern: constant
 - name: 空压机电表
   protocol: modbus_tcp
   gateway_id: GW-KY
   device_id: MTR-ACR120-007
   device_type: meter
+  host: "0.0.0.0"
+  port: 5021
+  slave_id: 1
   interval: 15
-  points:
-  - code: HW-E-060
-    name: 空压机有功电能
-    type: accumulate
-    base_value: 189000.0
-    hourly_increment:
-    - 10.0
-    - 45.0
-    pattern: industrial
-  - code: HW-E-061
-    name: 空压机功率
-    type: instant
-    range:
-    - 0.0
-    - 30.0
-    pattern: industrial
+  registers:
+    - point_code: HW-E-060
+      name: 空压机有功电能
+      address: 0
+      data_type: float32
+      scale: 1.0
+      offset: 0.0
+      type: accumulate
+      base_value: 189000.0
+      hourly_increment: [10.0, 45.0]
+      pattern: industrial
+    - point_code: HW-E-061
+      name: 空压机功率
+      address: 2
+      data_type: float32
+      scale: 1.0
+      offset: 0.0
+      type: instant
+      range: [0.0, 30.0]
+      pattern: industrial
 - name: 全厂总水表
   protocol: modbus_tcp
   gateway_id: GW-SS
   device_id: MTR-WATER-010
   device_type: meter
+  host: "0.0.0.0"
+  port: 5022
+  slave_id: 1
   interval: 15
-  points:
-  - code: HW-W-010
-    name: 全厂总用水量
-    type: accumulate
-    base_value: 567800.0
-    hourly_increment:
-    - 1.0
-    - 5.0
-    pattern: industrial
+  registers:
+    - point_code: HW-W-010
+      name: 全厂总用水量
+      address: 0
+      data_type: uint32
+      scale: 0.01
+      offset: 0.0
+      type: accumulate
+      base_value: 567800.0
+      hourly_increment: [1.0, 5.0]
+      pattern: industrial
 - name: 办公楼总电表
   protocol: mqtt
   gateway_id: GW-001
